@@ -1,0 +1,17 @@
+services:
+  jellyfin:
+    image: jellyfin/jellyfin
+    container_name: jellyfin
+    ports:
+      - "8096:8096"
+    volumes:
+      - ./config:/config
+      - ./cache:/cache
+      - /mnt/hdd/jello_media:/media
+    restart: unless-stopped
+    labels:
+      glance.name: Jellyfin
+      glance.icon: si:jellyfin
+      glance.url: http://rpi.netbird.cloud:8096
+      glance.description: Media streaming server
+      glance.id: jellyfin

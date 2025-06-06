@@ -1,0 +1,65 @@
+services:
+  immich:
+    image: ghcr.io/imagegenius/immich:latest
+    container_name: immich
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/UTC
+      - DB_HOSTNAME=postgres14
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=postgres
+      - DB_DATABASE_NAME=immich
+      - REDIS_HOSTNAME=redis
+      - DB_PORT=5432
+      - REDIS_PORT=6379
+      - SERVER_HOST=0.0.0.0
+      - SERVER_PORT=8081
+      - MACHINE_LEARNING_HOST=0.0.0.0
+      - MACHINE_LEARNING_PORT=3004
+      - MACHINE_LEARNING_WORKERS=1
+      - MACHINE_LEARNING_WORKER_TIMEOUT=120
+    volumes:
+      - /home/aritra/immich/appdata:/config
+      - /home/aritra/immich/photos:/photos
+      - /home/aritra/HOMELAB/immich/libraries:/libraries
+    ports:
+      - 8081:8081
+    restart: unless-stopped
+    depends_on:
+      - redis-immich
+      - postgres14-immich
+    labels:
+      glance.name: Immich
+      glance.icon: si:immich
+      glance.url: http://192.168.29.2:8081
+      glance.description: Image & video management
+      glance.id: immich
+
+  redis-immich:
+    image: redis
+    container_name: redis-immich
+    restart: unless-stopped
+    ports:
+      - 6380:6379
+    labels:
+      glance.parent: immich
+      glance.name: Redis
+      glance.icon: si:redis
+
+  postgres14-immich:
+    image: tensorchord/pgvecto-rs:pg14-v0.2.0
+    container_name: postgres14-immich
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: immich
+    ports:
+      - 5433:5432
+    restart: unless-stopped
+    volumes:
+      - /home/aritra/HOMELAB/immich/postgres:/var/lib/postgresql/data
+    labels:
+      glance.parent: immich
+      glance.name: Postgres
+      glance.icon: si:postgresql

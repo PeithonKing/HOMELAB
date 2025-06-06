@@ -1,0 +1,94 @@
+
+- name: Home
+  # Optionally, if you only have a single page you can hide the desktop navigation for a cleaner look
+  hide-desktop-navigation: true
+  columns:
+
+    - size: small
+      widgets:
+
+        - type: calendar
+          first-day-of-week: sunday
+
+        - type: releases
+          cache: 1d
+          # Without authentication the Github API allows for up to 60 requests per hour. You can create a
+          # read-only token from your Github account settings and use it here to increase the limit.
+          # token: ...
+          repositories:
+            - ollama/ollama
+            - jabed-umar/MoirePy
+
+
+
+
+    - size: full
+      widgets:
+
+        - type: search
+          search-engine: google
+          placeholder: Google Search
+          new-tab: true
+
+        - type: search
+          search-engine: https://www.youtube.com/results?search_query={QUERY}
+          placeholder: Youtube
+          new-tab: true
+          autofocus: true
+
+        - type: docker-containers
+          hide-by-default: false
+
+        - type: custom-api
+          title: Songs
+          url: http://192.168.29.2:5500/get_videos
+          cache: 1m
+          # template: |
+          #   <div class="video-scroll">
+          #     <div class="video-container">
+          #       {{ range .JSON.Array "" }}
+          #       <a href="{{ .String "url" }}" target="_blank" class="video-card">
+          #         <img src="{{ .String "thumbnail" }}" alt="thumbnail" class="video-thumbnail">
+          #         <div class="video-title">{{ .String "title" }}</div>
+          #       </a>
+          #       {{ end }}
+          #     </div>
+          #   </div>
+          template: |
+            <div class="video-grid">
+              {{ range .JSON.Array "" }}
+              <a href="{{ .String "url" }}" target="_blank" class="video-card">
+                <img src="{{ .String "thumbnail" }}" alt="thumbnail" class="video-thumbnail">
+                <div class="video-title">{{ .String "title" }}</div>
+              </a>
+              {{ end }}
+            </div>
+
+
+
+
+
+    - size: small
+      widgets:
+        - type: weather
+          location: Kolkata
+          units: metric # alternatively "imperial"
+          hour-format: 12h # alternatively "24h"
+          # Optionally hide the location from being displayed in the widget
+          # hide-location: true
+
+        - type: dns-stats
+          service: pihole-v6
+          url: http://192.168.29.2/
+          password: OLm5IF7hBBysq1iN0ymtwQ/nkuTaApttLOR4ApM7Ba4=
+
+        - type: server-stats
+          servers:
+            - type: local
+              name: Raspberry Pi 5
+              hide-mountpoints-by-default: true
+              mountpoints:
+                "/":
+                  hide: false
+                "/mnt/hdd":
+                  hide: false

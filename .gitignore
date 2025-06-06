@@ -1,0 +1,18 @@
+ca
+certs
+a.py
+
+# glance
+glance/ollama
+__pycache__
+.vscode
+.ipynb_checkpoints
+*.csv
+
+# jellyfin
+jellyfin/*
+!jellyfin/docker-compose.yml
+
+# pihole
+pihole/*
+!pihole/docker-compose.yml

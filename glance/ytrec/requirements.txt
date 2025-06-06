@@ -1,0 +1,4 @@
+ollama
+flask
+pandas
+tqdm

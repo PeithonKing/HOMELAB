@@ -1,0 +1,52 @@
+services:
+  glance:
+    container_name: glance
+    image: glanceapp/glance
+    restart: unless-stopped
+    volumes:
+      - ./config:/app/config
+      - ./assets:/app/assets
+      # Optionally, also mount docker socket if you want to use the docker containers widget
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /mnt/hdd:/mnt/hdd:ro
+    ports:
+      - 8082:8080
+    env_file: .env
+    depends_on:
+      - ytrec
+    labels:
+      glance.hide: true
+      glance.name: Glance
+      glance.icon: si:glance
+      glance.url: http://192.168.29.2:8082
+      glance.description: Dashboard for homelab
+      glance.id: glance
+
+  ollama:
+    image: ollama/ollama
+    container_name: ollama
+    volumes:
+      - ./ollama:/root/.ollama
+    ports:
+      - "11434:11434"
+    restart: unless-stopped
+    labels:
+      glance.parent: ollama
+      glance.name: Ollama
+      glance.icon: si:ollama
+
+  ytrec:
+    container_name: ytrec
+    build:
+      context: ./ytrec
+    restart: unless-stopped
+    volumes:
+      - ./ytrec:/app
+    ports:
+      - "5500:5500"  # expose Flask server, if used
+    depends_on:
+      - ollama
+    env_file: .env  # optional, if your code uses it
+    labels:
+      glance.parent: ollama
+      glance.name: YT Recommender
