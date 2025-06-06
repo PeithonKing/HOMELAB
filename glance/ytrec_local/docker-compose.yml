@@ -1,0 +1,10 @@
+services:
+  ytrec_local:
+    container_name: ytrec_local
+    build: .
+    volumes:
+      - .:/app
+      - /home/aritra/snap/brave/515/.config/BraveSoftware/Brave-Browser/Default:/brave/:ro
+    working_dir: /app
+    restart: unless-stopped
+    

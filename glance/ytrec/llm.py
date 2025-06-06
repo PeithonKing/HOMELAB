@@ -6,7 +6,7 @@ import ollama
 # model_name = 'gemma3:1b'
 model_name = 'gemma3'
 
-client = ollama.Client(host='http://localhost:11434')
+client = ollama.Client(host='http://192.168.29.2:11434')
 
 
 def is_song(title):
