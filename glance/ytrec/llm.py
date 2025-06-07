@@ -8,7 +8,6 @@ model_name = 'gemma3'
 
 client = ollama.Client(host='http://192.168.29.2:11434')
 
-
 def is_song(title):
     system_prompt = """You are a classifier. You determine whether a YouTube video title refers to a song. Respond with one of the following:
 - "SONG" if the title clearly indicates a song.
@@ -16,7 +15,7 @@ def is_song(title):
 - "UNCLEAR" if it's unclear.
 Respond with only the classification label, without any additional text. Pick one of the options above.
 """
-    response = client.generate(model=model_name, prompt=title, system=system_prompt, think=False)
+    response = client.generate(model=model_name, prompt=title, system=system_prompt, think=False, keep_alive=30)
     classification = response.response.strip().upper()
     print(f"Classification: {classification}")
     return classification == "SONG"
@@ -36,6 +35,7 @@ Examples:
 
 Respond only with the cleaned version. No extra text. Do not add any text which is not part of the song name or artist. Do not put in quotes.
 """
-    response = client.generate(model=model_name, prompt=title, system=system_prompt, think=False).response.strip()
-    print(f"Cleaned title: {response}")
-    return response
+    response = client.generate(model=model_name, prompt=title, system=system_prompt, think=False, keep_alive=30)
+    new_title = response.response.strip()
+    print(f"Cleaned title: {new_title}")
+    return new_title

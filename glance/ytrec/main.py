@@ -10,6 +10,7 @@ app = Flask(__name__)
 
 TMP_FILE = 'his.tmp'
 CSV_FILE = 'history.csv'
+PROCESSING_FILE = "his.processing.tmp"
 
 @app.route('/update_history', methods=['POST'])
 def receive_history():
@@ -32,42 +33,41 @@ def get_videos():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
 def should_store_and_clean(title):
     if not is_song(title):
         return False, None
     cleaned_title = clean_title(title)
+    time.sleep(2)  # Bro! Give the pi some time to breathe
     return True, cleaned_title
-
 
 def hourly_processor():
     while True:
-        time.sleep(30*1)
+        time.sleep(30 * 60)
 
         if not os.path.exists(TMP_FILE):
             continue
 
         try:
             df = pd.read_csv(TMP_FILE)
+            os.replace(TMP_FILE, PROCESSING_FILE)
         except Exception as e:
-            print(f"Error reading tmp file: {e}")
+            print(f"Could not read or rename tmp file: {e}")
             continue
 
-        df['timestamp'] = pd.to_numeric(df['timestamp'], errors='coerce')
+        df['timestamp'] = pd.to_numeric(df['timestamp'], errors='coerce').fillna(0)
         df = df.drop_duplicates(subset='url', keep='last')
 
-        # Apply filtering + cleaning
         filtered_rows = []
         try:
             print("Getting llm results")
-            for _, row in df.iterrows():
-                print(f"Processing: {row['title']}")
+            for i, row in df.iterrows():
+                print(f"{i+1}/{len(df)}: {row['title']}")
                 keep, cleaned_title = should_store_and_clean(row['title'])
                 if keep:
                     row['title'] = cleaned_title
                     filtered_rows.append(row)
         except Exception as e:
-            print(f"Error connecting to Ollama: {e}")
+            print(f"Error processing LLM batch: {e}")
             continue
 
         if filtered_rows:
@@ -75,9 +75,10 @@ def hourly_processor():
             final_df = final_df.sort_values('timestamp', ascending=False)
             final_df.to_csv(CSV_FILE, index=False)
 
-        os.remove(TMP_FILE)
-        print(f"[{time.ctime()}] Processed batch and cleared tmp.")
-
+        try:
+            os.remove(PROCESSING_FILE)
+        except Exception as e:
+            print(f"Error deleting processing file: {e}")  # which is fine... 
 
 
 # Start background processor
