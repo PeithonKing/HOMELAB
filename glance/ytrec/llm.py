@@ -10,8 +10,7 @@ client = ollama.Client(host='http://192.168.29.2:11434')
 
 
 def is_song(title):
-    system_prompt = """
-You are a classifier. You determine whether a YouTube video title refers to a song. Respond with one of the following:
+    system_prompt = """You are a classifier. You determine whether a YouTube video title refers to a song. Respond with one of the following:
 - "SONG" if the title clearly indicates a song.
 - "VIDEO" if the title clearly does not indicate a song.
 - "UNCLEAR" if it's unclear.
@@ -19,19 +18,24 @@ Respond with only the classification label, without any additional text. Pick on
 """
     response = client.generate(model=model_name, prompt=title, system=system_prompt, think=False)
     classification = response.response.strip().upper()
+    print(f"Classification: {classification}")
     return classification == "SONG"
 
 def clean_title(title):
-    system_prompt = """
-You are a title cleaner. Clean up YouTube song titles for storage. Your goal is to keep only:
-- The name of the song (if available)
-- The main artist
-- Optional: language, studio etc
-Remove anything else: video platform mentions, episode numbers, timestamps, redundant brackets, quotes, tags, emojis, etc. Output format:
+    system_prompt = """You are a title cleaner. Clean up YouTube song titles for storage. Your goal is to keep only:
+- The name of the song
+- The artist (only if present in the title)
+- Optional: language, studio etc (only if present in the title)
+Remove anything else: video platform mentions, episode numbers, timestamps, redundant brackets, quotes, tags, emojis, etc.
 
-Song Name (if available) | Artist Name (if available) | Optional info 
+Examples:
+- "Are Robot Vacuums FINALLY Worth Buying in 2025? - YouTube" -> "Are Robot Vacuums FINALLY Worth Buying in 2025?"
+- "(10) Best Robot Vacuum Cleaner 2025 - YouTube" -> "Best Robot Vacuum Cleaner 2025"
+- "(11) Sei To Abar Kachhe Ele - YouTube" -> "Sei To Abar Kachhe Ele"
+- "झाड़ू पोछा का रोबोट की वजह से मेरी ज़िंदगी पहली सी नहीं रही Vaccum Mop Robot Review 😳 - YouTube" -> "Mop Robot Review"
 
-Respond only with the cleaned version. No extra text.
+Respond only with the cleaned version. No extra text. Do not add any text which is not part of the song name or artist. Do not put in quotes.
 """
-    response = client.generate(model=model_name, prompt=title, system=system_prompt, think=False)
-    return response.response.strip()
+    response = client.generate(model=model_name, prompt=title, system=system_prompt, think=False).response.strip()
+    print(f"Cleaned title: {response}")
+    return response

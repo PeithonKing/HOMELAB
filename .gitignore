@@ -9,6 +9,7 @@ __pycache__
 .ipynb_checkpoints
 *.csv
 glance/ytrec/his.tmp
+glance/ytrec/.ytrec
 
 # jellyfin
 jellyfin/*

@@ -1,4 +1,3 @@
 ollama
 flask
 pandas
-tqdm

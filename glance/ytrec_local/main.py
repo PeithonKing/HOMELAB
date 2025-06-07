@@ -5,9 +5,9 @@ import sqlite3, os, time, requests
 print("started")
 
 HIST = os.path.expanduser('/brave/History')
-TEMP = '/app/brave_history_temp.sqlite'
+TEMP = 'brave_history_temp.sqlite'
 API = 'http://192.168.29.2:5500/update_history'
-STAMP = '/app/last_timestamp.txt'
+STAMP = 'last_timestamp.txt'
 INTERVAL = 15  # seconds
 
 def get_ts(): return int(open(STAMP).read()) if os.path.exists(STAMP) else 0

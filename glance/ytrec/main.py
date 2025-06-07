@@ -3,10 +3,8 @@ import pandas as pd
 import threading
 import time
 import os
-# import random
 from flask import jsonify
 from llm import is_song, clean_title
-from tqdm import tqdm
 
 app = Flask(__name__)
 
@@ -61,7 +59,9 @@ def hourly_processor():
         # Apply filtering + cleaning
         filtered_rows = []
         try:
-            for _, row in tqdm(df.iterrows(), total=len(df), desc="Getting llm results"):
+            print("Getting llm results")
+            for _, row in df.iterrows():
+                print(f"Processing: {row['title']}")
                 keep, cleaned_title = should_store_and_clean(row['title'])
                 if keep:
                     row['title'] = cleaned_title
