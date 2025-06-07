@@ -15,9 +15,9 @@ services:
     depends_on:
       - ytrec
     labels:
-      glance.hide: true
+      # glance.hide: true
       glance.name: Glance
-      glance.icon: si:glance
+      glance.icon: si:docker
       glance.url: http://192.168.29.2:8082
       glance.description: Dashboard for homelab
       glance.id: glance
@@ -31,7 +31,7 @@ services:
       - "11434:11434"
     restart: unless-stopped
     labels:
-      glance.parent: ollama
+      glance.parent: glance
       glance.name: Ollama
       glance.icon: si:ollama
 
@@ -48,5 +48,6 @@ services:
       - ollama
     env_file: .env  # optional, if your code uses it
     labels:
-      glance.parent: ollama
+      glance.parent: glance
       glance.name: YT Recommender
+      glance.icon: si:docker

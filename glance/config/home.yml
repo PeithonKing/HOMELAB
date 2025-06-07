@@ -55,7 +55,7 @@
           #     </div>
           #   </div>
           template: |
-            <div class="video-grid">
+            <div class="video-grid list list-gap-10 collapsible-container" data-collapse-after="4">
               {{ range .JSON.Array "" }}
               <a href="{{ .String "url" }}" target="_blank" class="video-card">
                 <img src="{{ .String "thumbnail" }}" alt="thumbnail" class="video-thumbnail">
