@@ -42,7 +42,7 @@
         - type: custom-api
           title: Songs
           url: http://192.168.29.2:5500/get_videos
-          cache: 1m
+          cache: 5s
           # template: |
           #   <div class="video-scroll">
           #     <div class="video-container">
@@ -72,10 +72,11 @@
       widgets:
         - type: weather
           location: Kolkata
-          units: metric # alternatively "imperial"
+          # units: imperial
+          units: metric
           hour-format: 12h # alternatively "24h"
           # Optionally hide the location from being displayed in the widget
-          # hide-location: true
+          hide-location: true
 
         - type: dns-stats
           service: pihole-v6
@@ -89,6 +90,8 @@
               hide-mountpoints-by-default: true
               mountpoints:
                 "/":
+                  hide: false
+                "/mnt/ssd":
                   hide: false
                 "/mnt/hdd":
                   hide: false
