@@ -39,30 +39,46 @@
         - type: docker-containers
           hide-by-default: false
 
-        - type: custom-api
-          title: Songs
-          url: http://192.168.29.2:5500/get_videos
-          cache: 5s
-          # template: |
-          #   <div class="video-scroll">
-          #     <div class="video-container">
-          #       {{ range .JSON.Array "" }}
-          #       <a href="{{ .String "url" }}" target="_blank" class="video-card">
-          #         <img src="{{ .String "thumbnail" }}" alt="thumbnail" class="video-thumbnail">
-          #         <div class="video-title">{{ .String "title" }}</div>
-          #       </a>
-          #       {{ end }}
-          #     </div>
-          #   </div>
-          template: |
-            <div class="video-grid list list-gap-10 collapsible-container" data-collapse-after="4">
-              {{ range .JSON.Array "" }}
-              <a href="{{ .String "url" }}" target="_blank" class="video-card">
-                <img src="{{ .String "thumbnail" }}" alt="thumbnail" class="video-thumbnail">
-                <div class="video-title">{{ .String "title" }}</div>
-              </a>
-              {{ end }}
-            </div>
+        # - type: custom-api
+        #   title: Songs
+        #   url: http://192.168.29.2:5500/get_videos
+        #   cache: 5s
+        #   # template: |
+        #   #   <div class="video-scroll">
+        #   #     <div class="video-container">
+        #   #       {{ range .JSON.Array "" }}
+        #   #       <a href="{{ .String "url" }}" target="_blank" class="video-card">
+        #   #         <img src="{{ .String "thumbnail" }}" alt="thumbnail" class="video-thumbnail">
+        #   #         <div class="video-title">{{ .String "title" }}</div>
+        #   #       </a>
+        #   #       {{ end }}
+        #   #     </div>
+        #   #   </div>
+        #   template: |
+        #     <div class="video-grid list list-gap-10 collapsible-container" data-collapse-after="4">
+        #       {{ range .JSON.Array "" }}
+        #       <a href="{{ .String "url" }}" target="_blank" class="video-card">
+        #         <img src="{{ .String "thumbnail" }}" alt="thumbnail" class="video-thumbnail">
+        #         <div class="video-title">{{ .String "title" }}</div>
+        #       </a>
+        #       {{ end }}
+        #     </div>
+
+        - type: rss
+          title: RSS Feeds
+          style: detailed-list
+          feeds:
+            - url: https://peithonking.github.io/my_blogs/rss.xml
+              title: My Blogs
+            - url: http://192.168.29.2:5500/static/rss/ollama_rss.xml
+              title: Ollama
+              limit: 10
+            # - url: https://feeds.bloomberg.com/markets/news.rss
+            #   title: Bloomberg
+            # - url: https://moxie.foxbusiness.com/google-publisher/markets.xml
+            #   title: Fox Business
+            # - url: https://moxie.foxbusiness.com/google-publisher/technology.xml
+            #   title: Fox Business
 
 
 

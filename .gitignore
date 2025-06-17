@@ -2,17 +2,18 @@ ca
 certs
 a.py
 .Trash-*
-
-# glance
-glance/ollama
 __pycache__
 .vscode
 .ipynb_checkpoints
+
+# glance
+glance/ollama
 *.csv
 glance/ytrec/his.tmp
 glance/ytrec/his.processing.tmp
 glance/ytrec/history.json
 glance/ytrec/.ytrec
+*rss.xml
 
 # jellyfin
 jellyfin/*
@@ -21,3 +22,6 @@ jellyfin/*
 # pihole
 pihole/*
 !pihole/docker-compose.yml
+
+# open-webui
+open-webui/data

@@ -1,4 +1,6 @@
 import ollama
+import requests
+from bs4 import BeautifulSoup
 
 # Specify the model to use
 # model_name = 'qwen3:4b'
@@ -20,7 +22,7 @@ Respond with only the classification label, without any additional text. Pick on
     print(f"Classification: {classification}")
     return classification == "SONG"
 
-def clean_title(title):
+def clean_title_llm(title, url):
     system_prompt = """You are a title cleaner. Clean up YouTube song titles for storage. Your goal is to keep only:
 - The name of the song
 - The artist (only if present in the title)
@@ -39,3 +41,32 @@ Respond only with the cleaned version. No extra text. Do not add any text which 
     new_title = response.response.strip()
     print(f"Cleaned title: {new_title}")
     return new_title
+
+def clean_title(title, url):
+    # User-Agent string for Firefox on Linux
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0'
+    }
+    try:
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()  # Raise an HTTPError for bad responses (4xx or 5xx)
+
+        soup = BeautifulSoup(response.text, 'html.parser')
+        title_tag = soup.find('title')
+
+        if title_tag:
+            full_title = title_tag.get_text()
+            # YouTube titles usually end with " - YouTube", so we remove it
+            if full_title.endswith(" - YouTube"):
+                return full_title[:-len(" - YouTube")]
+            return full_title
+        else:
+            print("Title tag not found in the page.")
+            return None
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching URL: {e}")
+        return None
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
+        return None
+
