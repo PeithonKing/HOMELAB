@@ -1,0 +1,26 @@
+services:
+  n8n:
+    image: docker.n8n.io/n8nio/n8n
+    container_name: n8n
+    ports:
+      - "8083:8083"
+    volumes:
+      - ./data:/home/node/.n8n
+    restart: unless-stopped
+    environment:
+      - N8N_SECURE_COOKIE=false
+      - N8N_HOST=rpi.netbird.cloud
+      - N8N_PORT=8083
+      # - N8N_PROTOCOL=http
+      # - N8N_BASIC_AUTH_ACTIVE=true
+      # - N8N_BASIC_AUTH_USER=admin
+      # - N8N_BASIC_AUTH_PASSWORD=admin_password
+      - GENERIC_TIMEZONE=Asia/Kolkata
+      - NODE_FUNCTION_ALLOW_BUILTIN=*
+      - NODE_FUNCTION_ALLOW_EXTERNAL=*
+    labels:
+      glance.name: n8n
+      glance.icon: si:n8n
+      glance.url: http://rpi.netbird.cloud:8083
+      glance.description: Workflow Automation Tool
+      glance.id: n8n
