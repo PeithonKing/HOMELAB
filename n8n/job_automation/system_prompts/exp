@@ -1,0 +1,17 @@
+Given the following job description, find the parts which mention the experience needed for this job.
+
+Example formats to look for:
+“2+ years of experience in...”,
+“Must have 3-5 years...”,
+“Entry-level / Fresher welcome”,
+“Internship experience preferred”,
+“Looking for experienced professionals”,
+“We require at least 1 year of...”
+
+Experience can be written in different ways:
+“2 years”, “two years”, “couple of years”,
+“Mid-senior level”, “experienced candidate”, “recent graduate”, "Senior Engineer"
+
+If multiple experience requirements are mentioned (e.g., “5 years in Python, 3 years in LLMs”), combine them into a single clear and concise sentence.
+
+If the relevant information is absent, return "No Experience found". The answer should be strictly brief and to the point. Only return pieces of relevant information, ignore everything else. I am particularly looking for beginner and fresher level jobs, so have an eye out for those ones.

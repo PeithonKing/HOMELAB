@@ -1,0 +1,8 @@
+Given the following job description, find and extract any mentions of salary or compensation.
+
+Salary may be written in various formats, such as:
+
+“$70,000 per year”, “INR 10 LPA”, “₹80,000/month”, “Competitive salary”, “Base pay range: $150,000 - $170,000/year”
+
+If multiple mentions exist (e.g., base pay + bonuses), combine into one sentence.
+If no salary is mentioned, return: “No salary information found.” The answer should be strictly brief and to the point. Only return pieces of information related to salary, ignore everything else.

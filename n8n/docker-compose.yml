@@ -24,3 +24,18 @@ services:
       glance.url: http://rpi.netbird.cloud:8083
       glance.description: Workflow Automation Tool
       glance.id: n8n
+
+  job_automation:
+    container_name: job_automation
+    build:
+      context: ./job_automation
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - ./job_automation:/app
+    ports:
+      - "8084:8084"
+    labels:
+      glance.parent: n8n
+      glance.name: Job Automation
+      glance.icon: si:docker

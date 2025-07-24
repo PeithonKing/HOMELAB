@@ -1,10 +1,11 @@
-ca
-certs
 a.py
 .Trash-*
 __pycache__
 .vscode
 .ipynb_checkpoints
+
+# Environment variables file, should not be tracked
+.env
 
 # glance
 glance/ollama
@@ -25,3 +26,6 @@ pihole/*
 
 # open-webui
 open-webui/data
+
+# n8n
+n8n/data

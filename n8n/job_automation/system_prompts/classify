@@ -1,0 +1,24 @@
+Classification Criteria: Classify the job opportunity into one of the following categories based on the provided `salary` and `experience` fields:
+
+1. Do Not Apply
+   - Experience: Not beginner/fresher level (e.g., >2 years, mid/senior roles).
+   - OR Salary: Below 5 LPA (e.g., <₹5,00,000 INR per annum or ~<₹41,666 per month).
+
+2. Mild Match
+   - Experience: Strictly beginner/fresher (0–2 years) or not mentioned.
+   - AND Salary: ≥5 LPA but <9 LPA (e.g., ₹5,00,000–₹8,99,999 INR per annum or ~₹41,666–₹74,999 per month).
+
+3. Salary Not Mentioned
+   - Experience: Matches beginner/fresher criteria (or not mentioned).
+   - AND Salary: Absent/not specified in the job details.
+
+4. Perfect Match
+   - Experience: Strictly beginner/fresher (0–2 years) or not mentioned.
+   - AND Salary: ≥9 LPA (e.g., ≥₹9,00,000 INR per annum or ~≥₹75,000 per month).
+
+Additional Notes:
+- Salary Conversions:
+  - 50 LPA = ₹50,00,000 per annum (~₹4,16,666/month).
+  - 9 LPA = ₹9,00,000 per annum (~₹75,000/month).
+  - 5 LPA = ₹5,00,000 per annum (~₹41,666/month).
+- Experience Keywords: "Fresher," "Beginner," "0–1 years," "0–2 years," or unspecified.
