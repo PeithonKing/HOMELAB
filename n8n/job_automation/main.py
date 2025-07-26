@@ -1,16 +1,16 @@
-import requests, time, os, random
+import requests, time, os, random, json
 from bs4 import BeautifulSoup
 import pandas as pd
 from models import Models
 from tqdm import tqdm, trange
-from flask import Flask, Response, jsonify
+from flask import Flask, Response, jsonify, request
 
 app = Flask(__name__)
 
 queries = [
-  { "job_title": "Machine Learning Engineer", "location": "India" },
-  { "job_title": "Python Developer",          "location": "India" },
-  { "job_title": "Data Scientist",            "location": "India" },
+  { "job_title": "Machine Learning Engineer", "location": "India", "take": 4 },
+  { "job_title": "Data Scientist",            "location": "India", "take": 4 },
+  { "job_title": "Python Developer",          "location": "India", "take": 2 },
 ]
 
 
@@ -47,6 +47,8 @@ def get_done_job_ids(csv_path="parsed_jobs.csv"):
 def get_job_description(job_id):
     url = f"https://www.linkedin.com/jobs-guest/jobs/api/jobPosting/{job_id}"
     html = requests.get(url).text
+    if "No longer accepting applications" in html:
+        return None
     soup = BeautifulSoup(html, "html.parser")
     details_div = soup.find("div", class_="decorated-job-posting__details")
     if not details_div:
@@ -62,15 +64,13 @@ def get_job_description(job_id):
     return cleaned
 
 def run_job_automation():
-    all_job_ids = []
+    job_ids = []
+    done_job_ids = set(get_done_job_ids())
     for q in queries:
         ids = LinkedIn_scraper(q["job_title"], q["location"])
-        all_job_ids.extend(ids)
-    all_job_ids = list(set(all_job_ids))
-
-    done_job_ids = set(get_done_job_ids())
-    job_ids = [job_id for job_id in all_job_ids if job_id not in done_job_ids]
-    job_ids = random.sample(job_ids, min(10, len(job_ids)))
+        ids = [job_id for job_id in ids if job_id not in done_job_ids]
+        job_ids.extend(ids[:q["take"]])
+    job_ids = list(set(job_ids))
 
     if os.path.exists("parsed_jobs.csv"):
         jobs = pd.read_csv("parsed_jobs.csv").to_dict(orient="records")
@@ -79,6 +79,7 @@ def run_job_automation():
 
     for job_id in tqdm(job_ids):
         jd = get_job_description(job_id)
+        if not jd: continue
 
         salary = llm.get_response(
             system_prompt=salary_system_prompt,
@@ -104,7 +105,7 @@ Return only the category name (e.g., "Perfect Match") based on the above rules."
             "job_id": job_id,
             "classification": classify,
             "link": f"https://www.linkedin.com/jobs-guest/jobs/api/jobPosting/{job_id}",
-            "time": time.time(),
+            "time": int(time.time()),
             # "job_description": jd,
             "salary": salary,
             "experience": exp,
@@ -116,12 +117,49 @@ Return only the category name (e.g., "Perfect Match") based on the above rules."
 
 @app.route('/', methods=['GET'])
 def index():
-    return Response("Job Automation Service is running", status=200)
+    # return Response("Job Automation Service is running", status=200)
+    return jsonify(pd.read_csv("parsed_jobs.csv").to_dict(orient="records")), 200
 
-@app.route('/run-job-automation', methods=['GET'])
+@app.route('/refresh-jobs', methods=['GET'])
+def get_jobs_endpoint():
+    jobs = get_done_job_ids()
+    removed_jobs = []
+    if not os.path.exists("parsed_jobs.csv"):
+        return "0 jobs removed", 200
+    df = pd.read_csv("parsed_jobs.csv")
+    for job in jobs:
+        jd = get_job_description(job)
+        if jd is None:
+            removed_jobs.append(job)
+    if removed_jobs:
+        df = df[~df["job_id"].astype(str).isin(removed_jobs)]
+        df.to_csv("parsed_jobs.csv", index=False)
+    return f"{len(removed_jobs)} jobs removed", 200
+
+is_job_automation_running = False
+
+@app.route('/get-new-jobs', methods=['GET'])
 def run_job_automation_endpoint():
+    global is_job_automation_running
+    if is_job_automation_running:
+        return jsonify({"error": "Job automation already running"}), 429
+    is_job_automation_running = True
     jobs = run_job_automation()
+    is_job_automation_running = False
     return jsonify(jobs), 200
+
+@app.route('/mark-done', methods=['POST'])
+def mark_done_endpoint():
+    job_id = str(request.get_json().get('job_id'))
+    if not os.path.exists("parsed_jobs.csv"):
+        return jsonify({"error": "parsed_jobs.csv not found"}), 404
+    df = pd.read_csv("parsed_jobs.csv")
+    if job_id not in df['job_id'].astype(str).values:
+        return jsonify({"error": "job_id doesn't exist"}), 404
+    df.loc[df['job_id'].astype(str) == job_id, 'done'] = True
+    df.to_csv("parsed_jobs.csv", index=False)
+    return jsonify({"success": True, "job_id": job_id})
+
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=8084, debug=False)

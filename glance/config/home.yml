@@ -71,6 +71,7 @@
             - url: https://peithonking.github.io/my_blogs/rss.xml
               title: My Blogs
             - url: http://192.168.29.2:5500/static/rss/ollama_rss.xml
+            # - url: https://ollama.com/blog/rss.xml
               title: Ollama
               limit: 10
             # - url: https://feeds.bloomberg.com/markets/news.rss

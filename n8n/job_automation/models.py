@@ -49,8 +49,8 @@ class Models:
 
     def _generate_model_response(self, model, system_prompt, prompt):
         now = int(time.time())
-        if now < self.interval + self.last_time:  # Wait if interval hasn't passed
-            wait_time = self.interval + self.last_time - now + 1
+        if now < self.last_time+self.interval:  # Wait if interval hasn't passed
+            wait_time = self.last_time + self.interval - now + 1
             time.sleep(wait_time)
 
         if model["type"] == "ollama":
@@ -85,11 +85,15 @@ class Models:
                 result = self._generate_model_response(model, system_prompt, prompt)
                 self.last_model = model_idx
                 self.last_time = time.time()
+                print(f"Model {model['name']} succeeded.")
                 return result
-            except Exception:
+            except openai.RateLimitError as e:
+                print(f"Model {model['name']} rate limited")
+            except Exception as e:
+                print(f"Model {model['name']} failed: {e.__class__.__name__} - {e}")
                 continue
-        # If all retries fail, activate fallback for 1 hour
-        self.fallback_until = time.time() + 3600
+        # If all retries fail, activate fallback for 5 minutes
+        self.fallback_until = time.time() + 300
         return self._generate_model_response(self.fallback_model, system_prompt, prompt)
 
 

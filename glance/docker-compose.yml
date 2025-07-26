@@ -23,18 +23,7 @@ services:
       glance.description: Dashboard for homelab
       glance.id: glance
 
-  ollama:
-    image: ollama/ollama
-    container_name: ollama
-    volumes:
-      - ./ollama:/root/.ollama
-    ports:
-      - "11434:11434"
-    restart: unless-stopped
-    labels:
-      glance.parent: glance
-      glance.name: Ollama
-      glance.icon: si:ollama
+
 
   ytrec:
     container_name: ytrec
@@ -50,4 +39,34 @@ services:
     labels:
       glance.parent: glance
       glance.name: YT Recommender
+      glance.icon: si:docker
+
+
+
+  ollama:
+    image: ollama/ollama
+    container_name: ollama
+    volumes:
+      - ./ollama:/root/.ollama
+    ports:
+      - "11434:11434"
+    restart: unless-stopped
+    labels:
+      glance.parent: glance
+      glance.name: Ollama
+      glance.icon: si:ollama
+
+
+
+  watcher:
+    container_name: watcher
+    build:
+      context: ./watcher
+    restart: unless-stopped
+    volumes:
+      - ./watcher:/app
+    network_mode: host
+    labels:
+      glance.parent: glance
+      glance.name: Watches system stats
       glance.icon: si:docker
