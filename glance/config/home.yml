@@ -37,7 +37,14 @@
           autofocus: true
 
         - type: docker-containers
+          title: General Docker Containers
           hide-by-default: false
+          category: "general"
+
+        - type: docker-containers
+          title: Jellyfin Related Docker Containers
+          hide-by-default: false
+          category: jellyfin
 
         # - type: custom-api
         #   title: Songs
@@ -110,5 +117,5 @@
                   hide: false
                 "/mnt/ssd":
                   hide: false
-                "/mnt/hdd":
-                  hide: false
+                # "/mnt/hdd":
+                #   hide: false

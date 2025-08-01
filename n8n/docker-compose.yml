@@ -24,6 +24,7 @@ services:
       glance.url: http://rpi.netbird.cloud:8083
       glance.description: Workflow Automation Tool
       glance.id: n8n
+      glance.category: general
 
   job_automation:
     container_name: job_automation
@@ -39,3 +40,4 @@ services:
       glance.parent: n8n
       glance.name: Job Automation
       glance.icon: si:docker
+      glance.category: general
