@@ -12,7 +12,7 @@ services:
     restart: unless-stopped
     labels:
       glance.name: Jellyfin
-      glance.icon: si:jellyfin
+      glance.icon: di:jellyfin
       glance.url: http://rpi.netbird.cloud:8096
       glance.description: Media streaming server
       glance.id: jellyfin
@@ -29,6 +29,7 @@ services:
       - 8097:5055
     volumes:
       - ./jellyseerr/app/config:/app/config
+      - /mnt/ssd/media:/media
     healthcheck:
       test: wget --no-verbose --tries=1 --spider http://localhost:5055/api/v1/status || exit 1
       start_period: 20s
@@ -40,7 +41,7 @@ services:
     restart: unless-stopped
     labels:
       glance.name: Jellyfin Seer
-      glance.icon: sh:jellyseerr-light
+      glance.icon: di:jellyseerr
       glance.url: http://rpi.netbird.cloud:8097
       glance.description: Jellyfin Seer for managing requests
       glance.id: jellyseerr
@@ -59,12 +60,14 @@ services:
     volumes:
       - ./sonarr:/config
       - ./sonarr:/data
+      - /mnt/ssd/media:/media
+    restart: unless-stopped
     labels:
       # glance.parent: jellyseerr
       glance.name: Sonarr
-      glance.icon: sh:sonarr-light
+      glance.icon: di:sonarr
       glance.url: http://rpi.netbird.cloud:8098
-      glance.description: Sonarr for managing TV series
+      glance.description: Managing TV series
       glance.id: sonarr
       glance.category: jellyfin
 
@@ -82,12 +85,14 @@ services:
     volumes:
       - ./radarr:/config
       - ./radarr:/data
+      - /mnt/ssd/media:/media
+    restart: unless-stopped
     labels:
       # glance.parent: jellyseerr
       glance.name: Radarr
-      glance.icon: sh:radarr-light
+      glance.icon: di:radarr
       glance.url: http://rpi.netbird.cloud:8099
-      glance.description: Radarr for managing movies
+      glance.description: Managing movies
       glance.id: radarr
       glance.category: jellyfin
 
@@ -103,11 +108,37 @@ services:
       - TZ=Asia/Kolkata
     volumes:
       - ./prowlarr:/config
+      - /mnt/ssd/media:/media
+    restart: unless-stopped
     labels:
       # glance.parent: jellyseerr
       glance.name: Prowlarr
-      glance.icon: sh:prowlarr-light
+      glance.icon: di:prowlarr
       glance.url: http://rpi.netbird.cloud:8100
-      glance.description: Prowlarr for managing requests
+      glance.description: Managing Torrents
       glance.id: prowlarr
+      glance.category: jellyfin
+
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:latest
+    container_name: qbittorrent
+    environment:
+      PUID: 1000
+      PGID: 1000
+      TZ: Asia/Kolkata
+      WEBUI_PORT: 8080
+    volumes:
+      - ./qbitorrent/config:/config
+      - /mnt/ssd/media:/media
+    ports:
+      - 8080:8080
+      - 6881:6881
+      - 6881:6881/udp
+    restart: unless-stopped
+    labels:
+      glance.name: qBittorrent
+      glance.icon: di:qbittorrent
+      glance.url: http://rpi.netbird.cloud:8080
+      glance.description: Torrent client
+      glance.id: qbittorrent
       glance.category: jellyfin

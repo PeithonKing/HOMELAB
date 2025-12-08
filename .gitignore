@@ -30,3 +30,6 @@ open-webui/data
 
 # n8n
 n8n/data
+
+# portainer
+portainer/data

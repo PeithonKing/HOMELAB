@@ -18,7 +18,7 @@ services:
     labels:
       # glance.hide: true
       glance.name: Glance
-      glance.icon: sh:glance-light
+      glance.icon: di:glance
       glance.url: http://192.168.29.2:8082
       glance.description: Dashboard for homelab
       glance.id: glance

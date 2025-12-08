@@ -1,0 +1,53 @@
+networks:
+  gitea:
+    external: false
+
+services:
+  server:
+    image: docker.gitea.com/gitea:1.24.5  # latest
+    container_name: gitea
+    environment:
+      - USER_UID=1000
+      - USER_GID=1000
+      - GITEA__database__DB_TYPE=postgres
+      - GITEA__database__HOST=db:5432
+      - GITEA__database__NAME=gitea
+      - GITEA__database__USER=gitea
+      - GITEA__database__PASSWD=gitea
+    restart: always
+    networks:
+      - gitea
+    volumes:
+      - ./gitea:/data
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    ports:
+      - "3000:3000"
+      - "2222:22"
+    depends_on:
+      - db
+    labels:
+      glance.name: Gitea
+      glance.icon: sh:gitea-light
+      glance.url: http://192.168.29.2:3000
+      glance.description: Self-hosted Git service
+      glance.id: gitea
+      glance.category: general
+
+  db:
+    image: docker.io/library/postgres:14
+    container_name: gitea-pgsql
+    restart: always
+    environment:
+      - POSTGRES_USER=gitea
+      - POSTGRES_PASSWORD=gitea
+      - POSTGRES_DB=gitea
+    networks:
+      - gitea
+    volumes:
+      - ./postgres:/var/lib/postgresql/data
+    labels:
+      glance.parent: gitea
+      glance.name: Postgres for Gitea
+      glance.icon: si:postgres
+      glance.category: general

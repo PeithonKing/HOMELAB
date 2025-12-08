@@ -1,0 +1,18 @@
+services:
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: portainer
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./data:/data
+
+    labels:
+      glance.name: Portainer
+      glance.icon: sh:portainer
+      glance.url: http://192.168.29.2:9000
+      glance.description: Container management UI
+      glance.id: portainer
+      glance.category: general

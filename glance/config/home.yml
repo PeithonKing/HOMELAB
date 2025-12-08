@@ -105,7 +105,7 @@
         - type: dns-stats
           service: pihole-v6
           url: http://192.168.29.2/
-          password: OLm5IF7hBBysq1iN0ymtwQ/nkuTaApttLOR4ApM7Ba4=
+          password: tBM/x0a9wLFvN+YFQ20OOvVq8J9t5vs8gtFnWCth6eE=
 
         - type: server-stats
           servers:

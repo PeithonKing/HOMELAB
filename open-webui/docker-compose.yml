@@ -9,4 +9,10 @@ services:
     volumes:
       - ./data:/app/backend/data
     restart: unless-stopped
-
+    labels:
+      glance.name: Open-WebUI
+      glance.icon: sh:open-webui
+      glance.url: http://rpi.netbird.cloud:3000
+      glance.description: Frontend for Ollama
+      glance.id: open-webui
+      glance.category: general

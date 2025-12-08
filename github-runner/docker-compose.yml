@@ -1,0 +1,25 @@
+services:
+  worker:
+    image: myoung34/github-runner:latest
+    container_name: github-runner
+    restart: unless-stopped
+    environment:
+      REPO_URL: https://github.com/ourusername/our-repo-name
+      RUNNER_NAME: rpi-runner
+      ACCESS_TOKEN: ghp_...ourtokenhere...
+      RUNNER_WORKDIR: /tmp/runner/work
+      CONFIGURED_ACTIONS_RUNNER_FILES_DIR: /runner/data # Required for persistence
+      # RUNNER_GROUP: my-group # github enterprise only
+      RUNNER_SCOPE: 'repo'
+      LABELS: self-hosted,linux,arm64,rpi
+      DISABLE_AUTOMATIC_DEREGISTRATION: "true"
+    security_opt:
+      # needed on SELinux systems to allow docker container to manage other docker containers
+      - label:disable
+    volumes:
+      - '/var/run/docker.sock:/var/run/docker.sock'
+      - '/runner/data:/runner/data' # required for persistence
+      - '/tmp/runner:/tmp/runner'
+      # note: a quirk of docker-in-docker is that this path
+      # needs to be the same path on host and inside the container,
+      # docker mgmt cmds run outside of docker but expect the paths from within

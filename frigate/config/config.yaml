@@ -1,0 +1,60 @@
+mqtt:
+  host: mqtt
+
+database:
+  path: /media/frigate/frigate.db
+
+detectors:
+  cpu1:
+    type: cpu
+    num_threads: 3
+
+cameras:
+  bird_cam:
+    ffmpeg:
+      inputs:
+        - path: rtsp://192.168.29.3:8554/bird_cam
+          roles:
+            - detect
+            - record
+      hwaccel_args: preset-rpi-64-h264
+
+    motion:
+      mask:
+        - 0,0.338,0.002,0,0.999,0,0.999,0.781,0.724,0.324
+        - 0.999,0.999,0.86,0.999,0.86,0.9,0.999,0.9
+    detect:
+      width: 1280
+      height: 720
+      fps: 5
+
+    objects:
+      track:
+        - bird
+      filters:
+        bird:
+          min_score: 0.65
+          threshold: 0.75
+
+    record:
+      enabled: true
+      retain:
+        days: 2     # 48 Hours of continuous "Safety Net"
+        mode: all
+      alerts:
+        retain:
+          days: 3650
+        pre_capture: 5
+        post_capture: 10
+      detections:
+        retain:
+          days: 3650
+        pre_capture: 5
+        post_capture: 10
+    snapshots:
+      enabled: true
+      retain:
+        default: 3650 # Keep the JPG snapshots for 10 years too
+detect:
+  enabled: true
+version: 0.16-0

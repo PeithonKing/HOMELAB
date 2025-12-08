@@ -6,11 +6,11 @@ services:
       - PUID=1000
       - PGID=1000
       - TZ=Etc/UTC
-      - DB_HOSTNAME=postgres14
+      - DB_HOSTNAME=postgres14-immich
       - DB_USERNAME=postgres
       - DB_PASSWORD=postgres
       - DB_DATABASE_NAME=immich
-      - REDIS_HOSTNAME=redis
+      - REDIS_HOSTNAME=redis-immich
       - DB_PORT=5432
       - REDIS_PORT=6379
       - SERVER_HOST=0.0.0.0
@@ -23,6 +23,7 @@ services:
       - /home/aritra/immich/appdata:/config
       - /home/aritra/immich/photos:/photos
       - /home/aritra/HOMELAB/immich/libraries:/libraries
+      - /mnt/ssd:/mnt/ssd:ro
     ports:
       - 8081:8081
     restart: unless-stopped
@@ -35,6 +36,7 @@ services:
       glance.url: http://192.168.29.2:8081
       glance.description: Image & video management
       glance.id: immich
+      glance.category: general
 
   redis-immich:
     image: redis
