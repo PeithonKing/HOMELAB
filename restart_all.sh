@@ -38,9 +38,17 @@ echo ========================================\n\n
 # cd ..
 # echo ========================================\n\n
 
-# open-webui
-echo "Restarting Open WebUI..."
-cd open-webui
+# # open-webui
+# echo "Restarting Open WebUI..."
+# cd open-webui
+# # docker compose down
+# time docker compose up -d
+# cd ..
+# echo ========================================\n\n
+
+# ollama
+echo "Restarting Ollama..."
+cd ollama
 # docker compose down
 time docker compose up -d
 cd ..
@@ -54,10 +62,42 @@ echo ========================================\n\n
 # cd ..
 # echo ========================================\n\n
 
-# portainer
-echo "Restarting portainer..."
-cd portainer
-# docker compose down
-time docker compose up -d
-cd ..
-echo ========================================\n\n
+# # portainer
+# echo "Restarting portainer..."
+# cd portainer
+# # docker compose down
+# time docker compose up -d
+# cd ..
+# echo ========================================\n\n
+
+# # frigate
+# echo "Restarting Frigate..."
+# cd frigate
+# # docker compose down
+# time docker compose up -d
+# cd ..
+# echo ========================================\n\n
+
+# # gitea
+# echo "Restarting Gitea..."
+# cd gitea
+# # docker compose down
+# time docker compose up -d
+# cd ..
+# echo ========================================\n\n
+
+# # github-runner
+# echo "Restarting Github Runner..."
+# cd github-runner
+# # docker compose down
+# time docker compose up -d
+# cd ..
+# echo ========================================\n\n
+
+# # qwen3-tts
+# echo "Restarting Qwen3 TTS..."
+# cd qwen3-tts
+# # docker compose down
+# time docker compose up -d
+# cd ..
+# echo ========================================\n\n

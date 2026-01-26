@@ -18,8 +18,12 @@ glance/watcher/data
 *rss.xml
 
 # jellyfin
-jellyfin/*
-!jellyfin/docker-compose.yml
+jellyfin/jellyfin
+jellyfin/jellyseerr
+jellyfin/prowlarr
+jellyfin/sonarr
+jellyfin/radarr
+jellyfin/qbittorrent
 
 # pihole
 pihole/*
