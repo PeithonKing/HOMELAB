@@ -37,3 +37,8 @@ n8n/data
 
 # portainer
 portainer/data
+
+
+
+# temporary ignores
+qwen3-tts

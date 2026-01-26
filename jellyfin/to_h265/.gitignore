@@ -1,0 +1,5 @@
+jf_movies
+test
+__pycache__
+videos.db*
+*.log
