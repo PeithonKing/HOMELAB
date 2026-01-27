@@ -159,16 +159,23 @@ def scan_directory_custom(directory_path: str) -> int:
     ]
     
     print(f"Found {len(new_candidates)} new candidates")
-    
+
     if not new_candidates:
+        # Even if no new files, run the linking pass
+        link_h265_files()
         return 0
-    
+
     print(f"Probing with {MAX_SCAN_WORKERS} workers...")
     new_files = []
-    
+
     with ThreadPoolExecutor(max_workers=MAX_SCAN_WORKERS) as executor:
         for result in executor.map(probe_file, new_candidates):
             if result:
+                # FILTER: Skip HEVC files that don't have "_h265" in name
+                if result["codec"] == "hevc" and "_h265." not in result["filename"]:
+                    print(f"  Skipping HEVC file without marker: {result['filename']}")
+                    continue
+
                 new_files.append(result)
                 print(f"  Found: {result['filename']} ({result['codec']})")
     
@@ -194,7 +201,46 @@ def scan_directory_custom(directory_path: str) -> int:
         session.commit()
     
     print(f"Added {len(new_files)} new files to database")
+    
+    # Run linking pass
+    link_h265_files()
+    
     return len(new_files)
+
+def link_h265_files():
+    """Link _h265 files to their originals."""
+    print("Linking derived H.265 files...")
+    with Session(engine) as session:
+        # Find all HEVC files with _h265 in name that don't have an origin
+        h265_files = session.exec(
+            select(VideoFile)
+            .where(VideoFile.codec == "hevc")
+            .where(VideoFile.filename.contains("_h265."))
+            .where(VideoFile.orig == None)
+        ).all()
+        
+        count = 0
+        for h265 in h265_files:
+            # Strip extension and _h265 suffix to get base path
+            # e.g., "path/to/video_h265.mp4" -> "path/to/video"
+            h265_base = os.path.splitext(h265.path)[0].replace("_h265", "")
+            
+            # Find original by matching the base path (without extension)
+            # This allows matching even if extensions differ (e.g., .mkv -> .mp4)
+            all_videos = session.exec(select(VideoFile)).all()
+            
+            for candidate in all_videos:
+                candidate_base = os.path.splitext(candidate.path)[0]
+                
+                if candidate_base == h265_base and candidate.id != h265.id:
+                    h265.orig = candidate.id
+                    session.add(h265)
+                    count += 1
+                    break
+            
+        session.commit()
+        if count > 0:
+            print(f"Linked {count} H.265 files to their originals.")
 
 
 if __name__ == "__main__":

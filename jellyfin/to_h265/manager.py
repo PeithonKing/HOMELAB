@@ -91,12 +91,12 @@ def dispatch_loop():
     while True:
         try:
             with Session(engine) as session:
-                # 1. Get Queued Jobs (FIFO by ID)
+                # 1. Get Queued Jobs (FIFO by Created At)
                 # Eager load video for path
                 queued_jobs = session.exec(
                     select(Job)
                     .where(Job.status == "queued")
-                    .order_by(Job.id)
+                    .order_by(Job.created_at)
                     .options(selectinload(Job.video))
                 ).all()
                 
@@ -109,12 +109,17 @@ def dispatch_loop():
                     # Because poll_loop updates DB, DB acts as state of truth for assignment.
                     
                     active_worker_ids = set()
-                    processing_jobs = session.exec(select(Job).where(Job.status == "processing")).all()
-                    for pj in processing_jobs:
-                        if pj.worker_id:
-                            active_worker_ids.add(pj.worker_id)
+                    # Check for processing OR paused jobs (worker is still holding the job)
+                    busy_jobs = session.exec(select(Job).where(Job.status.in_(["processing", "paused"]))).all()
+                    for job in busy_jobs:
+                        if job.worker_id:
+                            active_worker_ids.add(job.worker_id)
                     
-                    available_workers = [w for w in workers if w.id not in active_worker_ids]
+                    # Available = Enabled + Online + Not Busy
+                    available_workers = [
+                        w for w in workers 
+                        if w.is_online and w.id not in active_worker_ids
+                    ]
                     
                     # 4. Assignment Loop
                     # Simple FIFO: Assign first job to first available worker
@@ -126,32 +131,25 @@ def dispatch_loop():
                         
                         worker = available_workers[w_idx]
                         
-                        # Verify physical availability (Is it actually online/idle?)
-                        if is_worker_active(worker):
-                            print(f"Assigning Job {job.id} ({job.video.filename}) to {worker.name}...")
+                        # Trust DB state (is_online) and poller updates.
+                        # Direct dispatch without pre-check reduces latency.
+                        print(f"Assigning Job {job.id} ({job.video.filename}) to {worker.name}...")
+                        
+                        if dispatch_job(job, worker):
+                            job.status = "processing"
+                            job.worker_id = worker.id
+                            job.started_at = int(time.time())
                             
-                            if dispatch_job(job, worker):
-                                job.status = "processing"
-                                job.worker_id = worker.id
-                                job.started_at = time.time() # This works if model allows float? No model is datetime.
-                                # Fix: Model expects datetime
-                                job.started_at = datetime.utcnow()
-                                # Or simpler: just let database handle default? No, started_at is optional.
-                                # Let's skip timestamp for now or add import.
-                                
-                                session.add(job)
-                                session.commit()
-                                print(f"Dispatched Job {job.id}")
-                                w_idx += 1
-                            else:
-                                print(f"Worker {worker.name} rejected job.")
+                            session.add(job)
+                            session.commit()
+                            print(f"Dispatched Job {job.id}")
+                            w_idx += 1
                         else:
-                            print(f"Worker {worker.name} is offline or busy (physically).")
-                            # We don't increment w_idx here? 
-                            # If offline, we should probably try next worker for THIS job?
-                            # Or skip this worker for ALL jobs this round.
-                            # Current logic: try next worker for THIS job implies loop structure change.
-                            # Simpler: just skip this worker loop index.
+                            print(f"Worker {worker.name} rejected job (Dispatch failed).")
+                            # If dispatch fails, worker might be offline or ghost busy.
+                            # Poller will eventually update its status.
+                            # Try next worker for THIS job? No, loop structure assigns 1 job to 1 worker. 
+                            # If this worker failed, we just skip it for this cycle.
                             w_idx += 1 
 
         except Exception as e:
@@ -228,10 +226,42 @@ def poll_loop():
                     if status == "completed":
                         job.status = "completed"
                         job.progress_pct = 100.0
-                        job.completed_at = datetime.utcnow()
+                        job.completed_at = int(time.time())
                         job.video.status = "completed"
                         session.add(job.video)
                         print(f"Job {job.id} Completed.")
+
+                        # Auto-add the new file to DB
+                        try:
+                            # Construct expected output path
+                            # Worker hardcodes output to: {base}_h265.mp4
+                            src_rel_path = job.video.path
+                            base, _ = os.path.splitext(src_rel_path)
+                            out_rel_path = f"{base}_h265.mp4"
+                            
+                            # Check if it already exists in DB to avoid duplicates
+                            existing = session.exec(select(VideoFile).where(VideoFile.path == out_rel_path)).first()
+                            
+                            if not existing:
+                                abs_out_path = os.path.join(VIDEO_ROOT, out_rel_path)
+                                if os.path.exists(abs_out_path):
+                                    size = os.path.getsize(abs_out_path)
+                                    filename = os.path.basename(out_rel_path)
+                                    
+                                    new_video = VideoFile(
+                                        path=out_rel_path,
+                                        filename=filename,
+                                        size=size,
+                                        codec="hevc", # Safe assumption
+                                        duration=job.video.duration, # Should be same
+                                        frames=job.video.frames,
+                                        status="completed",
+                                        orig=job.video.id
+                                    )
+                                    session.add(new_video)
+                                    print(f"Auto-added new file: {filename} (derived from Job {job.id})")
+                        except Exception as e:
+                            print(f"Failed to auto-add new file for Job {job.id}: {e}")
                     
                     elif status == "error":
                         job.status = "error"
@@ -350,7 +380,8 @@ def get_state_api():
                 "duration": v.duration,
                 "frames": v.frames,
                 "codec": v.codec,
-                "status": v.status
+                "status": v.status,
+                "orig": v.orig
             }
             for v in videos
         ]
@@ -369,9 +400,9 @@ def get_state_api():
                 "preset": j.preset,
                 "crf": j.crf,
                 "threads": j.threads,
-                "created_at": j.created_at.isoformat() if j.created_at else None,
-                "started_at": j.started_at.isoformat() if j.started_at else None,
-                "completed_at": j.completed_at.isoformat() if j.completed_at else None
+                "created_at": j.created_at,
+                "started_at": j.started_at,
+                "completed_at": j.completed_at
             }
             for j in jobs
         ]
@@ -648,6 +679,69 @@ def delete_video(video_id: int):
         session.commit()
         
     return {"message": "Video removed from database"}
+
+@app.post("/videos/{video_id}/merge")
+def merge_video(video_id: int):
+    """Merge completed H.265 file with its original.
+    
+    This will:
+    1. Delete the original source file from disk
+    2. Rename the H.265 file to the original's name
+    3. Remove both entries from the database
+    """
+    with Session(engine) as session:
+        # Get the H.265 video
+        h265_video = session.get(VideoFile, video_id)
+        if not h265_video:
+            raise HTTPException(404, "Video not found")
+        
+        # Must have an original reference
+        if not h265_video.orig:
+            raise HTTPException(400, "This video has no linked original")
+        
+        # Get the original video
+        orig_video = session.get(VideoFile, h265_video.orig)
+        if not orig_video:
+            raise HTTPException(400, "Original video not found in database")
+        
+        # Construct full paths
+        h265_path = os.path.join(VIDEO_ROOT, h265_video.path)
+        orig_path = os.path.join(VIDEO_ROOT, orig_video.path)
+        
+        # Safety checks
+        if not os.path.exists(h265_path):
+            raise HTTPException(400, f"H.265 file not found on disk: {h265_video.path}")
+        
+        # Step 1: Delete original file (if exists)
+        if os.path.exists(orig_path):
+            try:
+                os.remove(orig_path)
+                print(f"Deleted original: {orig_path}")
+            except Exception as e:
+                raise HTTPException(500, f"Failed to delete original: {e}")
+        
+        # Step 2: Rename H.265 file to original's name
+        try:
+            os.rename(h265_path, orig_path)
+            print(f"Renamed {h265_path} -> {orig_path}")
+        except Exception as e:
+            raise HTTPException(500, f"Failed to rename file: {e}")
+        
+        # Step 3: Delete both database entries
+        # First delete any jobs associated with these videos
+        session.exec(select(Job).where(Job.video_id == h265_video.id)).all()
+        for job in session.exec(select(Job).where(Job.video_id == h265_video.id)).all():
+            session.delete(job)
+        for job in session.exec(select(Job).where(Job.video_id == orig_video.id)).all():
+            session.delete(job)
+        
+        session.delete(h265_video)
+        session.delete(orig_video)
+        session.commit()
+        
+        print(f"Merged: {h265_video.filename} -> {orig_video.filename}")
+    
+    return {"message": "Merge complete"}
 
 # ====================
 # Startup

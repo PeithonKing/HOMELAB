@@ -27,6 +27,7 @@ class VideoFile(SQLModel, table=True):
     
     # Relationships
     jobs: List["Job"] = Relationship(back_populates="video")
+    orig: Optional[int] = Field(default=None, foreign_key="videofile.id")
 
     def __repr__(self):
         return f"VideoFile(id={self.id}, filename={self.filename})"
@@ -75,9 +76,9 @@ class Job(SQLModel, table=True):
     threads: int = Field(default=0) # 0 = Use worker default/max
     
     # Timestamps
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    started_at: Optional[datetime] = Field(default=None)
-    completed_at: Optional[datetime] = Field(default=None)
+    created_at: int = Field(default_factory=lambda: int(datetime.utcnow().timestamp()))
+    started_at: Optional[int] = Field(default=None)
+    completed_at: Optional[int] = Field(default=None)
     
     # Relationships
     video: VideoFile = Relationship(back_populates="jobs")

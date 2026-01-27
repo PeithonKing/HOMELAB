@@ -141,23 +141,101 @@
                 <span class="queue-count" id="queue-count">0 items</span>
             </div>
 
-            <div class="card">
-                <div class="table-container">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th class="col-file">File</th>
-                                <th>Size</th>
-                                <th>Duration</th>
-                                <th>Status</th>
-                                <th class="col-progress">Progress</th>
-                                <th class="col-actions">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="videoTableBody">
-                            <!-- Populated by JS -->
-                        </tbody>
-                    </table>
+            <!-- Active Section (Processing + Queued + Paused) -->
+            <div class="collapsible-section" id="section-active">
+                <div class="section-header" onclick="toggleSection('active')">
+                    <div class="section-title">
+                        <svg class="chevron-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
+                            fill="currentColor">
+                            <path fill-rule="evenodd"
+                                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                                clip-rule="evenodd" />
+                        </svg>
+                        <span>Active</span>
+                        <span class="section-count" id="count-active">0</span>
+                    </div>
+                </div>
+                <div class="section-content">
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th class="col-file">File</th>
+                                    <th>Duration</th>
+                                    <th class="col-progress">Progress</th>
+                                    <th>Elapsed</th>
+                                    <th>ETA</th>
+                                    <th class="col-actions">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tableBody-active">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pending Section -->
+            <div class="collapsible-section" id="section-pending">
+                <div class="section-header" onclick="toggleSection('pending')">
+                    <div class="section-title">
+                        <svg class="chevron-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
+                            fill="currentColor">
+                            <path fill-rule="evenodd"
+                                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                                clip-rule="evenodd" />
+                        </svg>
+                        <span>Pending</span>
+                        <span class="section-count" id="count-pending">0</span>
+                    </div>
+                </div>
+                <div class="section-content">
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th class="col-file">File</th>
+                                    <th>Duration</th>
+                                    <th class="col-progress">Progress</th>
+                                    <th class="col-actions">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tableBody-pending">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Completed Section -->
+            <div class="collapsible-section collapsed" id="section-completed">
+                <div class="section-header" onclick="toggleSection('completed')">
+                    <div class="section-title">
+                        <svg class="chevron-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
+                            fill="currentColor">
+                            <path fill-rule="evenodd"
+                                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                                clip-rule="evenodd" />
+                        </svg>
+                        <span>Completed</span>
+                        <span class="section-count" id="count-completed">0</span>
+                    </div>
+                </div>
+                <div class="section-content">
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th class="col-file">File</th>
+                                    <th class="col-orig">Original</th>
+                                    <th>Duration</th>
+                                    <th class="col-actions">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tableBody-completed">
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </main>

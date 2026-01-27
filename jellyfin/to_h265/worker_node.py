@@ -22,6 +22,18 @@ MOUNT_ROOT = os.environ.get("H265_MOUNT", "./test")
 LOG_DIR = "/tmp/h265_worker_logs"
 
 # ====================
+# Hardware Acceleration Configuration
+# ====================
+
+# Read from .env file
+HW_ACCEL_AVAILABLE = os.environ.get("USE_VAAPI", "false").lower() == "true"
+
+if HW_ACCEL_AVAILABLE:
+    print("✓ Hardware acceleration (VAAPI) enabled")
+else:
+    print("✗ Hardware acceleration disabled, using software encoding")
+
+# ====================
 # Global State
 # ====================
 
@@ -53,17 +65,35 @@ class JobRequest(BaseModel):
 # ====================
 
 def build_ffmpeg_command(input_path, output_path, crf, preset, threads):
-    return [
-        "ffmpeg", "-y",
-        "-i", input_path,
-        "-c:v", "libx265",
-        "-crf", str(crf),
-        "-preset", preset,
-        "-threads", str(threads),
-        "-tag:v", "hvc1",
-        "-c:a", "copy",
-        output_path
-    ]
+    """Build FFmpeg command with hardware acceleration if available.
+    
+    Note: threads parameter is ignored as FFmpeg doesn't respect it properly.
+    """
+    if HW_ACCEL_AVAILABLE:
+        # VAAPI hardware encoding
+        # Note: VAAPI uses -qp instead of -crf, preset is not applicable
+        return [
+            "ffmpeg", "-y",
+            "-vaapi_device", "/dev/dri/renderD128",
+            "-i", input_path,
+            "-vf", "format=nv12,hwupload",
+            "-c:v", "hevc_vaapi",
+            "-qp", str(crf),  # Using crf value as qp
+            "-c:a", "copy",
+            output_path
+        ]
+    else:
+        # Software encoding (libx265)
+        return [
+            "ffmpeg", "-y",
+            "-i", input_path,
+            "-c:v", "libx265",
+            "-crf", str(crf),
+            "-preset", preset,
+            "-tag:v", "hvc1",
+            "-c:a", "copy",
+            output_path
+        ]
 
 # ====================
 # Log Parsing
