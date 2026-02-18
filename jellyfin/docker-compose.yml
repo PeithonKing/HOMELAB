@@ -8,7 +8,9 @@ services:
       - ./jellyfin/config:/config
       - ./jellyfin/cache:/cache
       - ./jellyfin/metadata:/metadata
-      - /mnt/ssd/media:/media
+      - /mnt/hdd/media:/media
+      - /mnt/ssd/media:/media_ssd
+      - /cache/jf_transcodes:/config/transcodes # to ram
     restart: unless-stopped
     labels:
       glance.name: Jellyfin
@@ -17,6 +19,8 @@ services:
       glance.description: Media streaming server
       glance.id: jellyfin
       glance.category: jellyfin
+
+
 
   jellyseerr:
     image: fallenbagel/jellyseerr:latest
@@ -29,7 +33,8 @@ services:
       - 8097:5055
     volumes:
       - ./jellyseerr/app/config:/app/config
-      - /mnt/ssd/media:/media
+      - /mnt/hdd/media:/media
+      - /mnt/ssd/media:/media_ssd
     healthcheck:
       test: wget --no-verbose --tries=1 --spider http://localhost:5055/api/v1/status || exit 1
       start_period: 20s
@@ -47,6 +52,8 @@ services:
       glance.id: jellyseerr
       glance.category: jellyfin
 
+
+
   sonarr:
     container_name: sonarr
     image: ghcr.io/hotio/sonarr
@@ -60,7 +67,8 @@ services:
     volumes:
       - ./sonarr:/config
       - ./sonarr:/data
-      - /mnt/ssd/media:/media
+      - /mnt/hdd/media:/media
+      - /mnt/ssd/media:/media_ssd
     restart: unless-stopped
     labels:
       # glance.parent: jellyseerr
@@ -71,7 +79,8 @@ services:
       glance.id: sonarr
       glance.category: jellyfin
 
-    
+
+
   radarr:
     container_name: radarr
     image: ghcr.io/hotio/radarr
@@ -85,7 +94,8 @@ services:
     volumes:
       - ./radarr:/config
       - ./radarr:/data
-      - /mnt/ssd/media:/media
+      - /mnt/hdd/media:/media
+      - /mnt/ssd/media:/media_ssd
     restart: unless-stopped
     labels:
       # glance.parent: jellyseerr
@@ -95,6 +105,8 @@ services:
       glance.description: Managing movies
       glance.id: radarr
       glance.category: jellyfin
+
+
 
   prowlarr:
     container_name: prowlarr
@@ -108,7 +120,8 @@ services:
       - TZ=Asia/Kolkata
     volumes:
       - ./prowlarr:/config
-      - /mnt/ssd/media:/media
+      - /mnt/hdd/media:/media
+      - /mnt/ssd/media:/media_ssd
     restart: unless-stopped
     labels:
       # glance.parent: jellyseerr
@@ -118,6 +131,8 @@ services:
       glance.description: Managing Torrents
       glance.id: prowlarr
       glance.category: jellyfin
+
+
 
   qbittorrent:
     image: lscr.io/linuxserver/qbittorrent:latest
@@ -130,7 +145,8 @@ services:
       # DOCKER_MODS: ghcr.io/vuetorrent/vuetorrent-lsio-mod:latest
     volumes:
       - ./qbittorrent/config:/config
-      - /mnt/ssd/media:/media
+      - /mnt/hdd/media:/media
+      - /mnt/ssd/media:/media_ssd
     ports:
       - 8080:8080
       - 6881:6881
@@ -143,3 +159,5 @@ services:
       glance.description: Torrent client
       glance.id: qbittorrent
       glance.category: jellyfin
+
+

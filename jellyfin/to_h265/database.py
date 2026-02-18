@@ -4,6 +4,7 @@
 from typing import Optional, List
 from datetime import datetime
 from sqlmodel import Field, SQLModel, create_engine, Session, select, Relationship
+from sqlalchemy import event
 
 # ====================
 # Models
@@ -100,7 +101,18 @@ class Job(SQLModel, table=True):
 
 DATABASE_FILE = "videos.db"
 DATABASE_URL = f"sqlite:///{DATABASE_FILE}"
-engine = create_engine(DATABASE_URL, echo=False)
+engine = create_engine(
+    DATABASE_URL, 
+    echo=False, 
+    connect_args={"timeout": 10}
+)
+
+@event.listens_for(engine, "connect")
+def set_sqlite_pragma(dbapi_connection, connection_record):
+    cursor = dbapi_connection.cursor()
+    cursor.execute("PRAGMA journal_mode=WAL")
+    cursor.execute("PRAGMA synchronous=NORMAL")
+    cursor.close()
 
 def create_db_and_tables():
     SQLModel.metadata.create_all(engine)

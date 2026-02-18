@@ -1,0 +1,25 @@
+services:
+  scrutiny:
+    image: ghcr.io/analogj/scrutiny:v0.8.6-omnibus
+    container_name: scrutiny
+    restart: unless-stopped
+    privileged: true
+    ports:
+      - "8084:8080" # Web UI
+      - "8086:8086" # InfluxDB
+    volumes:
+      - ./scrutiny:/opt/scrutiny/config
+      - ./influxdb2:/opt/scrutiny/influxdb
+      - /run/udev:/run/udev:ro
+      - /dev:/dev
+    devices:
+      - "/dev/sda:/dev/sda"
+      - "/dev/sdb:/dev/sdb"
+    labels:
+      glance.name: Scrutiny
+      glance.icon: si:scrutiny
+      glance.url: http://rpi.netbird.cloud:8084
+      glance.description: Drive Health Monitor
+      glance.id: scrutiny
+      glance.category: system
+

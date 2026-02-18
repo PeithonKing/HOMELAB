@@ -20,10 +20,13 @@ services:
       - MACHINE_LEARNING_WORKERS=1
       - MACHINE_LEARNING_WORKER_TIMEOUT=120
     volumes:
-      - /home/aritra/immich/appdata:/config
-      - /home/aritra/immich/photos:/photos
-      - /home/aritra/HOMELAB/immich/libraries:/libraries
+      # All application data moved to SSD
+      - /mnt/ssd/immich/appdata:/config
+      - /mnt/ssd/immich/photos:/photos
+      - /mnt/ssd/immich/libraries:/libraries
+      # Keep these as read-only access to your existing drives
       - /mnt/ssd:/mnt/ssd:ro
+      - /mnt/hdd:/mnt/hdd:ro
     ports:
       - 8081:8081
     restart: unless-stopped
@@ -39,11 +42,10 @@ services:
       glance.category: general
 
   redis-immich:
-    image: redis
+    image: redis:alpine # Switched to alpine for a smaller footprint
     container_name: redis-immich
     restart: unless-stopped
-    ports:
-      - 6380:6379
+    # Ports usually aren't needed for Redis unless you access it from outside Docker
     labels:
       glance.parent: immich
       glance.name: Redis
@@ -60,7 +62,8 @@ services:
       - 5433:5432
     restart: unless-stopped
     volumes:
-      - /home/aritra/HOMELAB/immich/postgres:/var/lib/postgresql/data
+      # Database storage moved to SSD for performance
+      - ./postgres:/var/lib/postgresql/data
     labels:
       glance.parent: immich
       glance.name: Postgres

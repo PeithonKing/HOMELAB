@@ -49,7 +49,7 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 def is_worker_active(worker: WorkerNode) -> bool:
     """Check if a worker is reachable and idle."""
     try:
-        r = requests.get(f"{worker.url}/status", timeout=2)
+        r = requests.get(f"{worker.url}/status", timeout=1)
         if r.status_code == 200:
             data = r.json()
             # If state is idle, it's definitely free.
@@ -73,7 +73,7 @@ def dispatch_job(job: Job, worker: WorkerNode) -> bool:
             "crf": job.crf,
             "threads": worker.threads_capacity if worker.threads_capacity > 0 else 0
         }
-        r = requests.post(f"{worker.url}/jobs", json=payload, timeout=10)
+        r = requests.post(f"{worker.url}/jobs", json=payload, timeout=1)
         return r.status_code == 202
     except Exception as e:
         print(f"Failed to dispatch Job {job.id} to {worker.name} ({worker.ip}): {e}")
@@ -172,7 +172,7 @@ def poll_loop():
                 for worker in workers:
 
                     try:  # Try to get worker status
-                        r = requests.get(f"{worker.url}/status", timeout=0.1)
+                        r = requests.get(f"{worker.url}/status", timeout=1)
                         data = r.json()
                     except Exception:
                         worker.is_online = False
@@ -195,7 +195,7 @@ def poll_loop():
                     
                     # Poll job details
                     try:
-                        jr = requests.get(f"{worker.url}/jobs/info/{job_id}", timeout=0.1)
+                        jr = requests.get(f"{worker.url}/jobs/info/{job_id}", timeout=1)
                         jdata = jr.json()
                     except Exception as e:
                         print(f"Failed to poll job {job_id} details: {e}")
