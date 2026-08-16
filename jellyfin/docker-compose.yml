@@ -20,23 +20,22 @@ services:
       glance.id: jellyfin
       glance.category: jellyfin
 
-
-
-  jellyseerr:
-    image: fallenbagel/jellyseerr:latest
-    container_name: jellyseerr
+  seerr:
+    image: ghcr.io/seerr-team/seerr:latest
+    init: true
+    container_name: seerr
     environment:
       - LOG_LEVEL=debug
       - TZ=Asia/Kolkata
-      - PORT=5055 #optional
+      - PORT=5055
     ports:
-      - 8097:5055
+      - "8097:5055"
     volumes:
-      - ./jellyseerr/app/config:/app/config
+      - ./seerr/app/config:/app/config
       - /mnt/hdd/media:/media
       - /mnt/ssd/media:/media_ssd
     healthcheck:
-      test: wget --no-verbose --tries=1 --spider http://localhost:5055/api/v1/status || exit 1
+      test: wget --no-verbose --tries=1 --spider http://localhost:5055/api/v1/settings/public || exit 1
       start_period: 20s
       timeout: 3s
       interval: 15s
@@ -45,11 +44,11 @@ services:
       - jellyfin
     restart: unless-stopped
     labels:
-      glance.name: Jellyfin Seer
+      glance.name: Seerr
       glance.icon: di:jellyseerr
       glance.url: http://rpi.netbird.cloud:8097
-      glance.description: Jellyfin Seer for managing requests
-      glance.id: jellyseerr
+      glance.description: Media request manager
+      glance.id: seerr
       glance.category: jellyfin
 
 
