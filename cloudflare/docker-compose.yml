@@ -1,0 +1,13 @@
+services:
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflared
+    restart: unless-stopped
+    command: tunnel run
+    env_file: .env
+    networks:
+      - jellyfin_default
+
+networks:
+  jellyfin_default:
+    external: true

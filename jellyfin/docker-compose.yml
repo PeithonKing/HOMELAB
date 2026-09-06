@@ -15,7 +15,7 @@ services:
     labels:
       glance.name: Jellyfin
       glance.icon: di:jellyfin
-      glance.url: http://rpi.netbird.cloud:8096
+      glance.url: http://pi5:8096
       glance.description: Media streaming server
       glance.id: jellyfin
       glance.category: jellyfin
@@ -46,7 +46,7 @@ services:
     labels:
       glance.name: Seerr
       glance.icon: di:jellyseerr
-      glance.url: http://rpi.netbird.cloud:8097
+      glance.url: http://pi5:8097
       glance.description: Media request manager
       glance.id: seerr
       glance.category: jellyfin
@@ -73,7 +73,7 @@ services:
       # glance.parent: jellyseerr
       glance.name: Sonarr
       glance.icon: di:sonarr
-      glance.url: http://rpi.netbird.cloud:8098
+      glance.url: http://pi5:8098
       glance.description: Managing TV series
       glance.id: sonarr
       glance.category: jellyfin
@@ -100,7 +100,7 @@ services:
       # glance.parent: jellyseerr
       glance.name: Radarr
       glance.icon: di:radarr
-      glance.url: http://rpi.netbird.cloud:8099
+      glance.url: http://pi5:8099
       glance.description: Managing movies
       glance.id: radarr
       glance.category: jellyfin
@@ -126,7 +126,7 @@ services:
       # glance.parent: jellyseerr
       glance.name: Prowlarr
       glance.icon: di:prowlarr
-      glance.url: http://rpi.netbird.cloud:8100
+      glance.url: http://pi5:8100
       glance.description: Managing Torrents
       glance.id: prowlarr
       glance.category: jellyfin
@@ -154,7 +154,7 @@ services:
     labels:
       glance.name: qBittorrent
       glance.icon: di:qbittorrent
-      glance.url: http://rpi.netbird.cloud:8080
+      glance.url: http://pi5:8080
       glance.description: Torrent client
       glance.id: qbittorrent
       glance.category: jellyfin
