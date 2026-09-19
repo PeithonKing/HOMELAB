@@ -15,7 +15,7 @@ services:
     labels:
       glance.name: Jellyfin
       glance.icon: di:jellyfin
-      glance.url: http://pi5:8096
+      glance.url: https://club.peithonking.com
       glance.description: Media streaming server
       glance.id: jellyfin
       glance.category: jellyfin
@@ -46,7 +46,7 @@ services:
     labels:
       glance.name: Seerr
       glance.icon: di:jellyseerr
-      glance.url: http://pi5:8097
+      glance.url: https://requests.peithonking.com
       glance.description: Media request manager
       glance.id: seerr
       glance.category: jellyfin
