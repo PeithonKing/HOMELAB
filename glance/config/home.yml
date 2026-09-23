@@ -104,8 +104,8 @@
 
         - type: dns-stats
           service: pihole-v6
-          url: http://192.168.29.2/
-          password: tBM/x0a9wLFvN+YFQ20OOvVq8J9t5vs8gtFnWCth6eE=
+          url: http://192.168.29.4/
+          password: granted
 
         - type: server-stats
           servers:

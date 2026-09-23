@@ -4,10 +4,10 @@ services:
     container_name: pihole
     image: pihole/pihole:latest
     ports:
-      - "192.168.29.2:53:53/tcp"
-      - "192.168.29.2:53:53/udp"
-      - "192.168.29.2:80:80/tcp"
-      - "192.168.29.2:443:443/tcp"
+      - "192.168.29.4:53:53/tcp"
+      - "192.168.29.4:53:53/udp"
+      - "192.168.29.4:80:80/tcp"
+      - "192.168.29.4:443:443/tcp"
 
       - "127.0.0.1:53:53/tcp"
       - "127.0.0.1:53:53/udp"
@@ -43,7 +43,7 @@ services:
     labels:
       glance.name: PiHole
       glance.icon: di:pi-hole
-      glance.url: http://192.168.29.2/admin
+      glance.url: http://192.168.29.4/admin
       glance.description: DNS Server and Ad Blocker
       glance.id: pihole
       glance.category: general
