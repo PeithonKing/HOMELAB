@@ -1,0 +1,17 @@
+version: '3'
+services:
+  silverbullet:
+    image: zefhemel/silverbullet
+    container_name: silverbullet
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./space:/space
+    labels:
+      glance.name: Silverbullet
+      glance.icon: di:silverbullet.png
+      glance.url: http://192.168.29.4:3000
+      glance.description: Markdown Knowledge Base
+      glance.id: silverbullet
+      glance.category: general
