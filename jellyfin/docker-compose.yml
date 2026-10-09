@@ -3,14 +3,14 @@ services:
     image: jellyfin/jellyfin
     container_name: jellyfin
     ports:
-      - "8096:8096"
+    - 8096:8096
     volumes:
-      - ./jellyfin/config:/config
-      - ./jellyfin/cache:/cache
-      - ./jellyfin/metadata:/metadata
-      - /mnt/hdd/media:/media
-      - /mnt/ssd/media:/media_ssd
-      - /cache/jf_transcodes:/config/transcodes # to ram
+    - ./jellyfin/config:/config
+    - ./jellyfin/cache:/cache
+    - ./jellyfin/metadata:/metadata
+    - /mnt/hdd/media:/media
+    - /mnt/ssd/media:/media_ssd
+    - /cache/jf_transcodes:/config/transcodes
     restart: unless-stopped
     labels:
       glance.name: Jellyfin
@@ -19,29 +19,32 @@ services:
       glance.description: Media streaming server
       glance.id: jellyfin
       glance.category: jellyfin
-
+    networks:
+    - default
+    - exposed_internet
   seerr:
     image: ghcr.io/seerr-team/seerr:latest
     init: true
     container_name: seerr
     environment:
-      - LOG_LEVEL=debug
-      - TZ=Asia/Kolkata
-      - PORT=5055
+    - LOG_LEVEL=debug
+    - TZ=Asia/Kolkata
+    - PORT=5055
     ports:
-      - "8097:5055"
+    - 8097:5055
     volumes:
-      - ./seerr/app/config:/app/config
-      - /mnt/hdd/media:/media
-      - /mnt/ssd/media:/media_ssd
+    - ./seerr/app/config:/app/config
+    - /mnt/hdd/media:/media
+    - /mnt/ssd/media:/media_ssd
     healthcheck:
-      test: wget --no-verbose --tries=1 --spider http://localhost:5055/api/v1/settings/public || exit 1
+      test: wget --no-verbose --tries=1 --spider http://localhost:5055/api/v1/settings/public
+        || exit 1
       start_period: 20s
       timeout: 3s
       interval: 15s
       retries: 3
     depends_on:
-      - jellyfin
+    - jellyfin
     restart: unless-stopped
     labels:
       glance.name: Seerr
@@ -50,54 +53,49 @@ services:
       glance.description: Media request manager
       glance.id: seerr
       glance.category: jellyfin
-
-
-
+    networks:
+    - default
+    - exposed_internet
   sonarr:
     container_name: sonarr
     image: ghcr.io/hotio/sonarr
     ports:
-      - "8098:8989"
+    - 8098:8989
     environment:
-      - PUID=1000
-      - PGID=1000
-      - UMASK=002
-      - TZ=Asia/Kolkata
+    - PUID=1000
+    - PGID=1000
+    - UMASK=002
+    - TZ=Asia/Kolkata
     volumes:
-      - ./sonarr:/config
-      - ./sonarr:/data
-      - /mnt/hdd/media:/media
-      - /mnt/ssd/media:/media_ssd
+    - ./sonarr:/config
+    - ./sonarr:/data
+    - /mnt/hdd/media:/media
+    - /mnt/ssd/media:/media_ssd
     restart: unless-stopped
     labels:
-      # glance.parent: jellyseerr
       glance.name: Sonarr
       glance.icon: di:sonarr
       glance.url: http://pi5:8098
       glance.description: Managing TV series
       glance.id: sonarr
       glance.category: jellyfin
-
-
-
   radarr:
     container_name: radarr
     image: ghcr.io/hotio/radarr
     ports:
-      - "8099:7878"
+    - 8099:7878
     environment:
-      - PUID=1000
-      - PGID=1000
-      - UMASK=002
-      - TZ=Asia/Kolkata
+    - PUID=1000
+    - PGID=1000
+    - UMASK=002
+    - TZ=Asia/Kolkata
     volumes:
-      - ./radarr:/config
-      - ./radarr:/data
-      - /mnt/hdd/media:/media
-      - /mnt/ssd/media:/media_ssd
+    - ./radarr:/config
+    - ./radarr:/data
+    - /mnt/hdd/media:/media
+    - /mnt/ssd/media:/media_ssd
     restart: unless-stopped
     labels:
-      # glance.parent: jellyseerr
       glance.name: Radarr
       glance.icon: di:radarr
       glance.url: http://pi5:8099
@@ -111,28 +109,24 @@ services:
     container_name: prowlarr
     image: ghcr.io/hotio/prowlarr
     ports:
-      - "8100:9696"
+    - 8100:9696
     environment:
-      - PUID=1000
-      - PGID=1000
-      - UMASK=002
-      - TZ=Asia/Kolkata
+    - PUID=1000
+    - PGID=1000
+    - UMASK=002
+    - TZ=Asia/Kolkata
     volumes:
-      - ./prowlarr:/config
-      - /mnt/hdd/media:/media
-      - /mnt/ssd/media:/media_ssd
+    - ./prowlarr:/config
+    - /mnt/hdd/media:/media
+    - /mnt/ssd/media:/media_ssd
     restart: unless-stopped
     labels:
-      # glance.parent: jellyseerr
       glance.name: Prowlarr
       glance.icon: di:prowlarr
       glance.url: http://pi5:8100
       glance.description: Managing Torrents
       glance.id: prowlarr
       glance.category: jellyfin
-
-
-
   qbittorrent:
     image: lscr.io/linuxserver/qbittorrent:latest
     container_name: qbittorrent
@@ -143,13 +137,13 @@ services:
       WEBUI_PORT: 8080
       # DOCKER_MODS: ghcr.io/vuetorrent/vuetorrent-lsio-mod:latest
     volumes:
-      - ./qbittorrent/config:/config
-      - /mnt/hdd/media:/media
-      - /mnt/ssd/media:/media_ssd
+    - ./qbittorrent/config:/config
+    - /mnt/hdd/media:/media
+    - /mnt/ssd/media:/media_ssd
     ports:
-      - 8080:8080
-      - 6881:6881
-      - 6881:6881/udp
+    - 8080:8080
+    - 6881:6881
+    - 6881:6881/udp
     restart: unless-stopped
     labels:
       glance.name: qBittorrent
@@ -158,5 +152,6 @@ services:
       glance.description: Torrent client
       glance.id: qbittorrent
       glance.category: jellyfin
-
-
+networks:
+  exposed_internet:
+    external: true

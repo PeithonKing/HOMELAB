@@ -8,6 +8,8 @@ services:
       - "3000:3000"
     volumes:
       - ./space:/space
+    networks:
+      - exposed_internet
     labels:
       glance.name: Silverbullet
       glance.icon: di:silverbullet.png
@@ -15,3 +17,7 @@ services:
       glance.description: Markdown Knowledge Base
       glance.id: silverbullet
       glance.category: general
+
+networks:
+  exposed_internet:
+    external: true

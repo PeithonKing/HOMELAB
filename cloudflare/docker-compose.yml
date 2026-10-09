@@ -6,8 +6,8 @@ services:
     command: tunnel run
     env_file: .env
     networks:
-      - jellyfin_default
+      - exposed_internet
 
 networks:
-  jellyfin_default:
+  exposed_internet:
     external: true
