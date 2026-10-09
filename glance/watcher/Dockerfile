@@ -1,6 +1,9 @@
-FROM python:3.12-slim
+FROM ghcr.io/astral-sh/uv:python3.11-alpine
+
+# psutil needs to compile C code on Alpine, so we need gcc and headers
+RUN apk add --no-cache gcc musl-dev linux-headers python3-dev
+
 WORKDIR /app
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-COPY . .
-CMD ["python", "main.py"]
+COPY main.py .
+
+CMD ["uv", "run", "main.py"]

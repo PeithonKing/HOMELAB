@@ -6,17 +6,15 @@ services:
     volumes:
       - ./config:/app/config
       - ./assets:/app/assets
-      # Optionally, also mount docker socket if you want to use the docker containers widget
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - /mnt/hdd:/mnt/hdd:ro  # check filled stats
-      - /mnt/ssd:/mnt/ssd:ro  # check filled stats
+      - /mnt/hdd:/mnt/hdd:ro
+      - /mnt/ssd:/mnt/ssd:ro
     ports:
       - 8082:8080
     env_file: .env
     depends_on:
-      - ytrec
+      - ollama-rss
     labels:
-      # glance.hide: true
       glance.name: Glance
       glance.icon: di:glance
       glance.url: http://192.168.29.2:8082
@@ -24,35 +22,42 @@ services:
       glance.id: glance
       glance.category: general
 
-
-
-  ytrec:
-    container_name: ytrec
+  ollama-rss:
+    container_name: ollama-rss
     build:
-      context: ./ytrec
+      context: ./tools/ollama-rss-rust
     restart: unless-stopped
-    volumes:
-      - ./ytrec:/app
     ports:
       - "5500:5500"
     labels:
       glance.parent: glance
-      glance.name: YT Recommender
-      glance.icon: si:docker
+      glance.name: Ollama RSS (Rust)
+      glance.icon: si:rust
       glance.category: general
 
+  # ollama-rss:
+  #   container_name: ollama-rss
+  #   build:
+  #     context: ./tools/ollama-rss-go
+  #   restart: unless-stopped
+  #   ports:
+  #     - "5500:5500"
+  #   labels:
+  #     glance.parent: glance
+  #     glance.name: Ollama RSS (Go)
+  #     glance.icon: si:go
+  #     glance.category: general
 
-
-  watcher:
-    container_name: watcher
-    build:
-      context: ./watcher
-    restart: unless-stopped
-    volumes:
-      - ./watcher:/app
-    network_mode: host
-    labels:
-      glance.parent: glance
-      glance.name: Watches system stats
-      glance.icon: si:docker
-      glance.category: general
+  # watcher:
+  #   container_name: watcher
+  #   build:
+  #     context: ./watcher
+  #   restart: unless-stopped
+  #   volumes:
+  #     - ./watcher:/app
+  #   network_mode: host
+  #   labels:
+  #     glance.parent: glance
+  #     glance.name: Watches system stats
+  #     glance.icon: si:docker
+  #     glance.category: general
