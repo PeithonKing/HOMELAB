@@ -77,7 +77,7 @@
           feeds:
             - url: https://peithonking.github.io/my_blogs/rss.xml
               title: My Blogs
-            - url: http://192.168.29.2:5500/static/rss/ollama_rss.xml
+            - url: http://192.168.29.4:5500/rss
             # - url: https://ollama.com/blog/rss.xml
               title: Ollama
               limit: 10
@@ -117,5 +117,5 @@
                   hide: false
                 "/mnt/ssd":
                   hide: false
-                # "/mnt/hdd":
-                #   hide: false
+                "/mnt/hdd":
+                  hide: false

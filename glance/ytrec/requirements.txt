@@ -1,5 +1,0 @@
-ollama
-flask
-pandas
-requests
-beautifulsoup4

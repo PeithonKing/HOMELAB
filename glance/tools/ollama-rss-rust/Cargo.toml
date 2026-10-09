@@ -1,0 +1,12 @@
+[package]
+name = "ollama-rss-rust"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+axum = "0.8.9"
+quick-xml = { version = "0.42.0", features = ["serialize"] }
+reqwest = "0.13.5"
+scraper = "0.27.0"
+serde = { version = "1.0.229", features = ["derive"] }
+tokio = { version = "1.53.2", features = ["full"] }
