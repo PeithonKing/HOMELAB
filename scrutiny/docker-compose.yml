@@ -6,15 +6,11 @@ services:
     privileged: true
     ports:
       - "8084:8080" # Web UI
-      - "8086:8086" # InfluxDB
     volumes:
       - ./scrutiny:/opt/scrutiny/config
       - ./influxdb2:/opt/scrutiny/influxdb
       - /run/udev:/run/udev:ro
       - /dev:/dev
-    devices:
-      - "/dev/sda:/dev/sda"
-      - "/dev/sdb:/dev/sdb"
     labels:
       glance.name: Scrutiny
       glance.icon: si:scrutiny

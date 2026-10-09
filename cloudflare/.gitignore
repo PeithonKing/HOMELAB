@@ -1,0 +1,18 @@
+# Environment variables (Secrets)
+.env
+
+# OpenTofu / Terraform directories and state files
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+*.tfvars
+*.tfvars.json
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Note: .terraform.lock.hcl is intentionally NOT ignored 
+# as it should be committed to version control to lock provider versions.
