@@ -13,9 +13,9 @@ services:
       - /dev:/dev
     labels:
       glance.name: Scrutiny
-      glance.icon: si:scrutiny
-      glance.url: http://rpi.netbird.cloud:8084
+      glance.icon: di:scrutiny
+      glance.url: http://192.168.29.4:8084
       glance.description: Drive Health Monitor
       glance.id: scrutiny
-      glance.category: system
+      glance.category: general
 

@@ -1,0 +1,19 @@
+services:
+  light_cbt:
+    build: https://github.com/PeithonKing/light_cbt.git#main
+    container_name: light_cbt
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - CBT_USER=Abhipsu
+      - DATA_DIR=/app/data
+    volumes:
+      - ./data:/app/data
+    labels:
+      glance.name: Light CBT
+      glance.icon: di:school
+      glance.url: http://192.168.29.4:8000
+      glance.description: Computer Based Test Engine
+      glance.id: light_cbt
+      glance.category: general
