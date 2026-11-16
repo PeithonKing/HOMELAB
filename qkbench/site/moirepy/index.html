@@ -1,0 +1,1214 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Ccircle cx=%2713%27 cy=%2716%27 r=%2710%27 fill=%27%233b82f6%27 fill-opacity=%27.8%27/%3E%3Ccircle cx=%2720%27 cy=%2716%27 r=%2710%27 fill=%27%23f97316%27 fill-opacity=%27.8%27/%3E%3C/svg%3E">
+<title>MoirePy Stack Builder</title>
+<style>
+  /* ===== tokens ===== */
+  :root {
+    color-scheme: light dark;
+    --font: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+    --bg:#f3f4f8; --panel:#ffffff; --panel-2:#f7f8fb; --soft:#eceef4;
+    --line:#e2e5ee; --line-strong:#ccd1df;
+    --fg:#161821; --mut:#5d6477;
+    --acc:#5a47e0; --acc-fg:#ffffff; --acc-soft:rgb(90 71 224 / .10); --acc-line:rgb(90 71 224 / .38);
+    --ok:#16794c; --warn:#955700; --bad:#c02f2f;
+    --cv:#fbfcfe; --cell:#5a47e0;
+    --shadow:rgb(24 28 48 / .22);
+    --r-lg:14px; --r-md:10px; --r-sm:7px;
+    --ease:cubic-bezier(.2,.7,.2,1);
+    --py-com:#68717f; --py-str:#0a7d32; --py-num:#a8530a; --py-kw:#9b2fb0; --py-cls:#0b5fc0; --py-fn:#76581f;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg:#0b0c11; --panel:#14161d; --panel-2:#191c25; --soft:#222634;
+      --line:#262a37; --line-strong:#383e51;
+      --fg:#e9ebf2; --mut:#99a1b5;
+      --acc:#9f93ff; --acc-fg:#12121a; --acc-soft:rgb(159 147 255 / .13); --acc-line:rgb(159 147 255 / .42);
+      --ok:#5fd6a1; --warn:#f0b35a; --bad:#ff8f8f; --cv:#08090d; --cell:#b9afff; --shadow:rgb(0 0 0 / .6);
+      --py-com:#8b949e; --py-str:#7ee787; --py-num:#ffa657; --py-kw:#ff7b72; --py-cls:#79c0ff; --py-fn:#d2a8ff;
+    }
+  }
+  :root[data-theme="light"] { color-scheme: light; }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg:#0b0c11; --panel:#14161d; --panel-2:#191c25; --soft:#222634;
+    --line:#262a37; --line-strong:#383e51;
+    --fg:#e9ebf2; --mut:#99a1b5;
+    --acc:#9f93ff; --acc-fg:#12121a; --acc-soft:rgb(159 147 255 / .13); --acc-line:rgb(159 147 255 / .42);
+    --ok:#5fd6a1; --warn:#f0b35a; --bad:#ff8f8f; --cv:#08090d; --cell:#b9afff; --shadow:rgb(0 0 0 / .6);
+    --py-com:#8b949e; --py-str:#7ee787; --py-num:#ffa657; --py-kw:#ff7b72; --py-cls:#79c0ff; --py-fn:#d2a8ff;
+  }
+
+  /* ===== base ===== */
+  * { box-sizing:border-box; scrollbar-width:thin; scrollbar-color:var(--line-strong) transparent; }
+  *::-webkit-scrollbar { width:10px; height:10px; }
+  *::-webkit-scrollbar-thumb { background:var(--line-strong); border-radius:10px; border:3px solid transparent; background-clip:content-box; }
+  *::-webkit-scrollbar-track { background:transparent; }
+  html,body { height:100%; }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:var(--font); font-size:14px; line-height:1.5; font-feature-settings:"cv11","ss03"; -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility; }
+  button,input,select { font:inherit; color:inherit; }
+  input,select,table { font-variant-numeric:tabular-nums; }
+  :focus-visible { outline:2px solid var(--acc); outline-offset:2px; }
+  ::selection { background:var(--acc-soft); }
+
+  /* ===== header ===== */
+  header { display:flex; align-items:center; gap:10px; padding:0 16px; min-height:52px; border-bottom:1px solid var(--line); background:color-mix(in srgb,var(--panel) 92%, transparent); backdrop-filter:blur(10px) saturate(1.3); position:relative; z-index:40; flex-wrap:wrap; }
+  header h1 { font-size:16px; margin:0; font-weight:650; letter-spacing:-.01em; display:flex; align-items:center; white-space:nowrap; }
+  header h1::before { content:""; width:24px; height:20px; margin-right:10px; flex:none;
+    background:radial-gradient(circle at 36% 50%, rgb(59 130 246 / .9) 0 38%, transparent 40%), radial-gradient(circle at 64% 50%, rgb(249 115 22 / .88) 0 38%, transparent 40%); }
+  header .sp { flex:1; }
+  header .tag { font-size:13px; color:var(--mut); }
+  header .tag a { color:var(--acc); text-decoration:none; font-weight:500; }
+  header .tag a:hover { text-decoration:underline; text-underline-offset:3px; }
+
+  /* ===== buttons & fields ===== */
+  .btn { display:inline-flex; align-items:center; justify-content:center; gap:6px; min-height:32px; padding:4px 12px; border:1px solid var(--line); background:var(--panel); border-radius:9px; cursor:pointer; font-weight:500; transition:background .14s var(--ease), border-color .14s var(--ease), box-shadow .14s var(--ease), transform .08s; }
+  .btn:hover { background:var(--soft); border-color:var(--line-strong); }
+  .btn:active { transform:translateY(.5px); }
+  .btn.pri { background:var(--acc); color:var(--acc-fg); border-color:var(--acc); box-shadow:inset 0 1px 0 rgb(255 255 255 / .18); }
+  .btn.pri:hover { filter:brightness(1.07); background:var(--acc); }
+  .btn.sm { min-height:26px; padding:2px 10px; font-size:13px; border-radius:8px; }
+  .btn.on { background:var(--acc-soft); color:var(--acc); border-color:var(--acc-line); }
+  select.btn, select.inp, .pill select, #tiles, #colormode { appearance:none; -webkit-appearance:none; padding-right:28px;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M3 4.5 6 7.5 9 4.5' fill='none' stroke='%238b92a6' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat:no-repeat; background-position:right 9px center; }
+  input[type=number], select.inp { width:100%; min-height:34px; padding:5px 10px; background-color:var(--panel-2); border:1px solid var(--line); border-radius:var(--r-md); transition:border-color .14s var(--ease), box-shadow .14s var(--ease), background-color .14s; }
+  input[type=number]:hover, select.inp:hover { border-color:var(--line-strong); }
+  input[type=number]:focus, select.inp:focus { outline:none; border-color:var(--acc); background-color:var(--panel); box-shadow:0 0 0 3px var(--acc-soft); }
+  input[type=number]:disabled { opacity:.55; cursor:not-allowed; }
+  input.badin { border-color:var(--bad) !important; box-shadow:0 0 0 3px color-mix(in srgb,var(--bad) 14%, transparent) !important; }
+  input[type=number]::-webkit-inner-spin-button { opacity:0; transition:opacity .12s; }
+  input[type=number]:hover::-webkit-inner-spin-button, input[type=number]:focus::-webkit-inner-spin-button { opacity:.6; }
+  input[type=color] { width:100%; height:34px; padding:3px; background:var(--panel-2); border:1px solid var(--line); border-radius:var(--r-md); cursor:pointer; }
+  input[type=color]::-webkit-color-swatch-wrapper { padding:0; } input[type=color]::-webkit-color-swatch { border:none; border-radius:6px; }
+  input[type=checkbox] { accent-color:var(--acc); width:15px; height:15px; margin:0; }
+  input[type=range] { accent-color:var(--acc); }
+
+  /* ===== segmented control ===== */
+  .seg { display:flex; gap:2px; padding:3px; margin-top:6px; background:var(--soft); border:1px solid transparent; border-radius:var(--r-md); overflow:visible; }
+  .seg button { flex:1; border:none; background:transparent; padding:5px 8px; min-height:28px; cursor:pointer; font-size:13px; font-weight:500; color:var(--mut); border-radius:7px; transition:background .14s var(--ease), color .14s, box-shadow .14s; }
+  .seg button + button { border-left:none; }
+  .seg button:hover { color:var(--fg); }
+  .seg button.on { background:var(--panel); color:var(--fg); font-weight:600; box-shadow:0 1px 2px var(--shadow), 0 0 0 1px var(--line); }
+
+  /* ===== layout ===== */
+  #app { display:grid; grid-template-columns:380px minmax(0,1fr) 380px; grid-template-areas:"left view side"; height:calc(100% - 53px); }
+  #app.noside { grid-template-columns:380px minmax(0,1fr) 0; }
+  #left { grid-area:left; overflow:auto; padding:14px; border-right:1px solid var(--line); background:var(--bg); }
+  #viewer { grid-area:view; position:relative; min-width:0; overflow:hidden;
+    background:radial-gradient(120% 100% at 50% 38%, var(--cv) 55%, color-mix(in srgb,var(--cv) 94%, var(--fg)) 100%); }
+  #side { grid-area:side; overflow:auto; border-left:1px solid var(--line); background:var(--panel); }
+  #app.noside #side { display:none; }
+  #app.noside #sidetab { display:inline-flex; }
+  @media (min-width:1200px) and (max-width:1399px){
+    #app { grid-template-columns:370px minmax(0,1fr) 320px; }
+    #app.noside { grid-template-columns:370px minmax(0,1fr) 0; }
+  }
+  @media (min-width:1101px) and (max-width:1199px){
+    #app, #app.noside { grid-template-columns:380px minmax(0,1fr); grid-template-areas:"left view"; }
+    #side { position:fixed; right:0; top:53px; bottom:0; width:min(430px,92vw); z-index:30; border-radius:16px 0 0 16px; box-shadow:-14px 0 36px -12px var(--shadow); }
+  }
+  @media (max-width:1100px){
+    #sidetab, #sideclose { display:none !important; }
+    #app.noside #side { display:block; }
+    #app, #app.noside { grid-template-columns:1fr; grid-template-areas:"view" "left" "side"; height:auto; }
+    #viewer { height:68vh; min-height:360px; }
+    #left { border-right:none; }
+    #side { border-left:none; border-top:1px solid var(--line); }
+  }
+
+  /* ===== stack summary ===== */
+  #stackinfo { background:var(--panel); border:1px solid var(--line); border-radius:var(--r-lg); padding:12px 14px; margin-bottom:12px; font-size:13px; line-height:1.5; }
+  #stackinfo b { font-variant-numeric:tabular-nums; font-weight:650; }
+  #stackinfo.bad { color:var(--bad); border-color:color-mix(in srgb,var(--bad) 40%, var(--line)); background:color-mix(in srgb,var(--bad) 6%, var(--panel)); }
+
+  /* ===== layer cards (elevation: border only) ===== */
+  details.layer { background:var(--panel); border:1px solid var(--line); border-radius:var(--r-lg); margin-bottom:10px; transition:border-color .14s var(--ease); }
+  details.layer[open] { border-color:var(--line-strong); }
+  details.layer.err { border-color:color-mix(in srgb,var(--bad) 55%, var(--line)); background:color-mix(in srgb,var(--bad) 4%, var(--panel)); }
+  details.layer > summary { list-style:none; display:flex; align-items:center; gap:9px; padding:11px 12px; cursor:pointer; user-select:none; border-radius:var(--r-lg); transition:background .14s; }
+  details.layer > summary:hover { background:var(--panel-2); }
+  details.layer[open] > summary { border-bottom-left-radius:0; border-bottom-right-radius:0; }
+  details.layer > summary::-webkit-details-marker { display:none; }
+  .chev { width:7px; height:7px; margin:0 3px 0 1px; border-right:1.6px solid var(--mut); border-bottom:1.6px solid var(--mut); transform:rotate(-45deg); transition:transform .16s var(--ease); flex:none; }
+  details[open] > summary .chev { transform:rotate(45deg); }
+  .dot { width:12px; height:12px; border-radius:50%; flex:none; box-shadow:inset 0 0 0 1px rgb(0 0 0 / .14), 0 0 0 3px color-mix(in srgb,var(--fg) 7%, transparent); }
+  .ttl { font-weight:600; flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; letter-spacing:-.005em; }
+  .tag { font-size:12px; color:var(--mut); font-weight:400; }
+  .iconbtn { border:none; background:none; cursor:pointer; color:var(--mut); padding:4px 7px; border-radius:7px; font-size:13px; line-height:1; transition:background .12s, color .12s; }
+  .iconbtn:hover { background:var(--soft); color:var(--fg); }
+  .body { padding:6px 14px 14px; border-top:1px solid var(--line); }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:0 12px; }
+  .fld label, .lbl { display:block; font-size:12px; color:var(--mut); font-weight:500; margin:10px 0 4px; }
+  .sec { display:flex; align-items:center; gap:10px; font-size:12px; font-weight:650; color:var(--fg); margin:18px 0 2px; }
+  .sec::after { content:""; flex:1; height:1px; background:var(--line); }
+  .pairrow { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+  .pairrow input { width:58px; text-align:center; padding:5px 4px; }
+  .pairrow .arrow, .pairrow .par { color:var(--mut); }
+  .matgrid { display:inline-grid; grid-template-columns:repeat(2,66px); gap:6px; padding:6px 10px; border-left:1.5px solid var(--fg); border-right:1.5px solid var(--fg); border-radius:8px; }
+  .hint { color:var(--mut); font-size:12px; line-height:1.5; margin:6px 0 0; }
+  .msg { font-size:13px; line-height:1.5; margin-top:10px; padding:9px 11px; border-radius:var(--r-md); background:var(--acc-soft); border:1px solid color-mix(in srgb,var(--acc) 20%, transparent); }
+  .msg.bad { color:var(--bad); background:color-mix(in srgb,var(--bad) 9%, transparent); border-color:color-mix(in srgb,var(--bad) 28%, transparent); }
+  .msg.warn { color:var(--warn); background:color-mix(in srgb,var(--warn) 11%, transparent); border-color:color-mix(in srgb,var(--warn) 30%, transparent); }
+  .chips { display:flex; gap:6px; flex-wrap:wrap; margin-top:12px; }
+  .chip { background:var(--panel-2); border:1px solid var(--line); border-radius:8px; padding:3px 9px; font-size:13px; color:var(--mut); }
+  .chip b { font-variant-numeric:tabular-nums; color:var(--fg); font-weight:650; }
+  .chip.ok b { color:var(--ok); } .chip.warn b { color:var(--warn); }
+  .idbox { margin-top:10px; font-family:var(--mono); font-size:12px; color:var(--mut); overflow-wrap:anywhere; line-height:1.55; }
+  .idbox .m { color:var(--fg); }
+
+  /* ===== options table ===== */
+  .scroll { max-height:250px; overflow:auto; border:1px solid var(--line); border-radius:var(--r-md); margin-top:8px; background:var(--panel); }
+  table.res { width:100%; border-collapse:separate; border-spacing:0; font-size:13px; }
+  table.res th, table.res td { padding:6px 6px; text-align:right; border-bottom:1px solid var(--line); font-variant-numeric:tabular-nums; white-space:nowrap; }
+  table.res tbody tr:last-child td { border-bottom:none; }
+  table.res th:first-child, table.res td:first-child { text-align:left; }
+  table.res th { position:sticky; top:0; z-index:1; background:var(--panel-2); color:var(--mut); font-weight:600; font-size:12px; cursor:pointer; user-select:none; transition:color .12s; }
+  table.res th:hover { color:var(--fg); }
+  table.res th.sorted { color:var(--acc); }
+  table.res tbody tr { cursor:pointer; transition:background .1s; }
+  table.res tbody tr:hover { background:var(--panel-2); }
+  table.res tbody tr.sel { background:var(--acc-soft); }
+  table.res tbody tr.sel td { color:var(--fg); font-weight:600; }
+  table.res tr:focus-visible, table.res th:focus-visible { outline-offset:-2px; }
+  #addbtn { width:100%; padding:13px; border:1.5px dashed var(--line-strong); background:transparent; border-radius:var(--r-lg); cursor:pointer; color:var(--mut); font-weight:500; transition:border-color .14s, color .14s, background .14s; }
+  #addbtn:hover { border-color:var(--acc); color:var(--acc); background:var(--acc-soft); }
+
+  /* ===== viewer ===== */
+  canvas#cv { position:absolute; inset:0; width:100%; height:100%; cursor:grab; touch-action:none; }
+  canvas#cv.locked { touch-action:pan-y; cursor:default; }
+  canvas#cv:active { cursor:grabbing; }
+  #viewer.stale canvas#cv { opacity:.45; transition:opacity .15s; }
+  #viewer.stale::after { content:"Searching… showing the previous result"; position:absolute; left:50%; top:46%; transform:translateX(-50%); background:var(--panel); border:1px solid var(--line); border-radius:var(--r-md); padding:6px 12px; font-size:13px; box-shadow:0 8px 24px -10px var(--shadow); pointer-events:none; }
+  .toolbar { position:absolute; top:10px; left:10px; right:10px; display:flex; gap:8px; align-items:center; flex-wrap:wrap; pointer-events:none; z-index:2; }
+  .toolbar > * { pointer-events:auto; }
+  .pill { display:flex; align-items:center; gap:2px; min-height:34px; padding:3px; font-size:13px;
+    background:color-mix(in srgb,var(--soft) 78%, transparent); border:1px solid color-mix(in srgb,var(--line) 85%, transparent); border-radius:11px;
+    box-shadow:0 6px 18px -10px var(--shadow); backdrop-filter:blur(12px) saturate(1.4); }
+  .pill .btn.sm { border:none; background:transparent; min-height:26px; border-radius:8px; color:var(--mut); font-weight:550; }
+  .pill .btn.sm:hover { background:var(--soft); color:var(--fg); }
+  .pill .btn.sm.on, .pill.seg button.on { background:var(--panel); color:var(--fg); font-weight:600; box-shadow:0 1px 2px var(--shadow), 0 0 0 1px var(--line); }
+  .pill.seg { padding:3px; margin:0; }
+  .pill label { margin:0; display:flex; gap:6px; align-items:center; cursor:pointer; white-space:nowrap; padding:0 8px; color:var(--fg); font-weight:500; }
+  .pill select { background-color:transparent; border:none; font-size:13px; font-weight:500; padding:4px 26px 4px 8px; cursor:pointer; border-radius:8px; }
+  .pill select:hover { background-color:var(--soft); }
+  .pill b { font-variant-numeric:tabular-nums; min-width:1.4em; }
+  .legend { position:absolute; left:10px; bottom:10px; display:flex; flex-direction:column; gap:4px; font-size:12px; pointer-events:none; max-width:62%; }
+  .legend span { background:color-mix(in srgb,var(--panel) 82%, transparent); border:1px solid color-mix(in srgb,var(--line) 80%, transparent); padding:2px 10px; border-radius:8px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; backdrop-filter:blur(8px); }
+  .legend i { display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:7px; vertical-align:0; }
+  .legend i.ramp { width:90px; height:9px; border-radius:5px; margin:0 7px; vertical-align:-1px; background:linear-gradient(90deg,#6c3b9a,#4f5fb0,#2f84b4,#27a597,#58c36e,#a8d93a,#fde725); }
+  #vnote { position:absolute; right:10px; bottom:10px; color:var(--mut); font-size:12px; text-align:right; max-width:42%; pointer-events:none; background:color-mix(in srgb,var(--panel) 70%, transparent); padding:3px 9px; border-radius:8px; backdrop-filter:blur(8px); }
+  .touchonly { display:none; }
+  @media (pointer:coarse) { .touchonly { display:flex; } }
+
+  /* ===== code panel ===== */
+  .sidehead { display:flex; align-items:center; gap:8px; padding:10px 12px; border-bottom:1px solid var(--line); position:sticky; top:0; background:color-mix(in srgb,var(--panel) 92%, transparent); backdrop-filter:blur(10px); z-index:2; }
+  .sidehead b { flex:1; font-weight:650; letter-spacing:-.005em; }
+  .sidehead .seg { margin:0; }
+  #code { margin:12px; padding:14px 16px; background:var(--panel-2); border:1px solid var(--line); border-radius:12px; font:13px/1.65 var(--mono); white-space:pre-wrap; overflow-wrap:anywhere; tab-size:4; }
+  #code .com { color:var(--py-com); font-style:italic; } #code .str { color:var(--py-str); } #code .num { color:var(--py-num); }
+  #code .kw { color:var(--py-kw); } #code .cls { color:var(--py-cls); } #code .fn { color:var(--py-fn); }
+  #codemsg { padding:0 12px; } #codemsg .msg { margin-top:12px; }
+  #sidetab { display:none; }
+
+  /* ===== touch and motion ===== */
+  @media (pointer:coarse) {
+    .btn, input[type=number], select.inp { min-height:42px; }
+    .btn.sm { min-height:34px; } .seg button { min-height:38px; } .iconbtn { padding:9px 11px; }
+    .pill { min-height:42px; } .pill .btn.sm { min-height:34px; } table.res td, table.res th { padding:10px 9px; }
+  }
+  @media (max-width:1100px){
+    .toolbar { flex-wrap:nowrap; overflow-x:auto; padding-bottom:6px; scrollbar-width:none; }
+    .toolbar::-webkit-scrollbar { display:none; } .toolbar > * { flex:none; }
+    .legend { max-width:70%; } #vnote { display:none; }
+    header { padding:8px 14px; gap:8px; } header .tag, header .sp { display:none; }
+    header h1 { flex:1 0 100%; }
+    header #example { flex:1 1 140px; min-width:0; }
+  }
+  @media (prefers-reduced-motion: reduce){ * { transition:none !important; animation:none !important; } }
+
+</style>
+</head>
+<body>
+<header>
+  <h1>MoirePy Stack Builder</h1>
+  <span class="tag">Build exact moiré stacks, copy the MoirePy code · <a href="https://github.com/jabed-umar/MoirePy" target="_blank" rel="noopener" style="color:var(--acc)">GitHub</a></span>
+  <span class="sp"></span>
+  <select class="btn" id="example" aria-label="Load example">
+    <option value="">Load example…</option>
+    <option value="tbg">Twisted bilayer graphene, 5.09°</option>
+    <option value="magic">Magic-angle TBG, 1.05°</option>
+    <option value="attg">Alternating trilayer (0, θ, 0)</option>
+    <option value="helical">Helical trilayer (0, θ, 2θ)</option>
+    <option value="ghbn">Graphene on hBN (aligned, strained)</option>
+    <option value="sq">Twisted square bilayer, 36.87°</option>
+  </select>
+  <button class="btn" id="sharebtn" title="Copy a link that restores this stack">Share link</button>
+  <button class="btn" id="themebtn" title="Toggle dark mode" aria-label="Toggle dark mode">Theme</button>
+</header>
+
+<div id="app">
+  <div id="left">
+    <div id="stackinfo" aria-live="polite"></div>
+    <div id="layers"></div>
+    <button id="addbtn">＋ Add layer</button>
+    <p class="hint" style="margin-top:10px">θ is the counter-clockwise rotation of a layer relative to the base. Lengths are in Å (any unit works if used consistently); the generated code works in units of the base lattice constant.</p>
+  </div>
+
+  <div id="viewer">
+    <canvas id="cv"></canvas>
+    <div class="toolbar">
+      <div class="pill">
+        <button class="btn sm" data-view="iso">3D</button>
+        <button class="btn sm" data-view="top">Top</button>
+        <button class="btn sm" data-view="side">Side</button>
+      </div>
+      <div class="pill seg" style="padding:0;margin:0">
+        <button data-proj="persp" title="Perspective: parallel lines meet at vanishing points">Perspective</button>
+        <button data-proj="ortho" title="Orthographic: parallel lines stay parallel">Ortho</button>
+      </div>
+      <div class="pill"><select id="tiles" title="How much to draw" aria-label="How many supercells to draw"><option value="1">1 supercell</option><option value="3" selected>3×3 supercells</option></select></div>
+      <div class="pill"><select id="colormode" aria-label="Colour mode" title="Colour atoms by layer, or show the local AA/AB registry of each layer on the one below"><option value="layer">Layer colours</option><option value="reg">Registry (AA / AB)</option></select></div>
+      <div class="pill"><label><input type="checkbox" id="showbonds" checked> Bonds</label><label><input type="checkbox" id="showcell" checked> Cell</label></div>
+      <div class="pill"><label>z × <input type="range" id="zs" min="1" max="20" step="0.5" value="2" style="width:70px" aria-label="Vertical stretch of the layer spacing" title="Vertical stretch of the layer spacing (the Side view raises it automatically)"><b id="zsv">2</b></label></div>
+      <div class="pill touchonly"><button class="btn sm" id="lockbtn">✋ Interact</button></div>
+      <span style="flex:1"></span>
+      <button class="btn sm" id="sidetab">‹ Code</button>
+    </div>
+    <div class="legend" id="legend"></div>
+    <div id="vnote"></div>
+  </div>
+
+  <aside id="side">
+    <div class="sidehead">
+      <b>Python</b>
+      <div class="seg" style="margin:0;width:190px"><button data-api="auto" class="on" title="Classic form when possible, exact twist= otherwise">Auto</button><button data-api="classic" title="add_layer(ll1, ll2, ul1, ul2)">Classic</button><button data-api="twist" title="add_layer(twist=Twist(...))">Twist</button></div>
+      <button class="btn sm pri" id="copy">Copy</button>
+      <button class="iconbtn" id="sideclose" title="Hide code panel">✕</button>
+    </div>
+    <div id="codemsg"></div>
+    <pre id="code"></pre>
+  </aside>
+</div>
+
+<script>
+'use strict';
+/* ============================================================
+   Exact rational helpers (BigInt) for lattice intersection
+   ============================================================ */
+const babs = a => a < 0n ? -a : a;
+const bgcd = (a,b) => { a=babs(a); b=babs(b); while(b){ [a,b]=[b,a%b]; } return a; };
+class Q {
+  constructor(n, d=1n){ if(d===0n) throw new Error('Division by zero in lattice arithmetic.'); if(d<0n){ n=-n; d=-d; } const g=bgcd(n,d)||1n; this.n=n/g; this.d=d/g; }
+  sub(o){ return new Q(this.n*o.d-o.n*this.d, this.d*o.d); }
+  mul(o){ return new Q(this.n*o.n, this.d*o.d); }
+  div(o){ return new Q(this.n*o.d, this.d*o.n); }
+  neg(){ return new Q(-this.n, this.d); }
+  num(){ return Number(this.n)/Number(this.d); }
+}
+const qi = x => new Q(BigInt(x));
+function basisOf(vecs){                       // lattice generated by rational 2D vectors -> 2 basis vectors
+  let D = 1n;
+  for(const v of vecs) for(const c of v) D = D*c.d/bgcd(D,c.d);
+  let vs = vecs.map(v => v.map(c => c.n*(D/c.d)));
+  const basis = [];
+  for(const col of [0,1]){
+    for(;;){
+      const nz = vs.filter(v => v[col] !== 0n);
+      if(nz.length <= 1) break;
+      nz.sort((a,b) => babs(a[col]) < babs(b[col]) ? -1 : 1);
+      const p = nz[0];
+      for(const v of nz.slice(1)){ const k = v[col]/p[col]; v[0]-=k*p[0]; v[1]-=k*p[1]; }
+    }
+    const nz = vs.filter(v => v[col] !== 0n);
+    if(nz.length){ basis.push(nz[0]); vs = vs.filter(v => v !== nz[0]); }
+  }
+  if(basis.length<2) throw new Error('Degenerate lattice.');
+  return basis.map(v => v.map(c => new Q(c, D)));
+}
+function dualBasis([b1,b2]){                  // columns b1,b2 -> dual basis (rows of S^-1)
+  const det = b1[0].mul(b2[1]).sub(b2[0].mul(b1[1]));
+  return [[b2[1].div(det), b2[0].neg().div(det)], [b1[1].neg().div(det), b1[0].div(det)]];
+}
+const intersect = (L1,L2) => dualBasis(basisOf([...dualBasis(L1), ...dualBasis(L2)]));
+const detQ = ([b1,b2]) => b1[0].mul(b2[1]).sub(b2[0].mul(b1[1]));
+
+/* ============================================================
+   Lattices (match moirepy.presets) and materials
+   ============================================================ */
+const S3 = Math.sqrt(3);
+const HEXA = [[1,0.5],[0,S3/2]];
+const TYPES = {
+  hex: { cls:'HexagonalLayer',  name:'Honeycomb',   fold:6, A:HEXA, basis:[[0,0],[0.5,0.5/S3]],          r:0.11 },
+  tri: { cls:'TriangularLayer', name:'Triangular',  fold:6, A:HEXA, basis:[[0,0]],                       r:0.15 },
+  kag: { cls:'KagomeLayer',     name:'Kagome',      fold:6, A:HEXA, basis:[[0,0],[0.5,0],[0.25,S3/4]],   r:0.10 },
+  rhb: { cls:'Rhombus60Layer',  name:'Rhombus 60°', fold:6, A:HEXA, basis:[[0,0]],                       r:0.15 },
+  sq:  { cls:'SquareLayer',     name:'Square',      fold:4, A:[[1,0],[0,1]], basis:[[0,0]],              r:0.15 },
+};
+const MATS = {
+  graphene: { name:'Graphene',        type:'hex', a:2.46,  d:3.35 },
+  hbn:      { name:'hBN',             type:'hex', a:2.504, d:3.33 },
+  mos2:     { name:'MoS₂ (Mo sites)', type:'tri', a:3.16,  d:6.15 },
+  wse2:     { name:'WSe₂ (W sites)',  type:'tri', a:3.28,  d:6.48 },
+  custom:   { name:'Custom' },
+};
+const CROT = { 6:[[0,-1],[1,1]], 4:[[0,-1],[1,0]] };   // smallest lattice rotation, lattice coords
+const PALETTE = ['#3b82f6','#f97316','#10b981','#d946ef','#eab308','#06b6d4','#ef4444','#84cc16'];
+
+// nearest-neighbour bonds per lattice type as [k, k2, du1, du2], each bond once
+for(const T of Object.values(TYPES)){
+  const pos = (k,u1,u2) => { const b=T.basis[k]; return [T.A[0][0]*u1+T.A[0][1]*u2+b[0], T.A[1][0]*u1+T.A[1][1]*u2+b[1]]; };
+  let dmin = Infinity; const cand = [];
+  for(let k=0;k<T.basis.length;k++) for(let k2=0;k2<T.basis.length;k2++) for(let u1=-1;u1<=1;u1++) for(let u2=-1;u2<=1;u2++){
+    if(k===k2&&!u1&&!u2) continue;
+    const p=pos(k,0,0), q=pos(k2,u1,u2), d=Math.hypot(q[0]-p[0],q[1]-p[1]);
+    cand.push([d,k,k2,u1,u2]); dmin=Math.min(dmin,d);
+  }
+  T.bonds = cand.filter(c => c[0] < dmin*1.01 && (c[3]>0 || (c[3]===0 && (c[4]>0 || (c[4]===0 && c[2]>c[1]))))).map(c=>c.slice(1));
+}
+
+/* ---------- float linear algebra ---------- */
+const mulv = (M,v) => [M[0][0]*v[0]+M[0][1]*v[1], M[1][0]*v[0]+M[1][1]*v[1]];
+const mulm = (X,Y) => [[X[0][0]*Y[0][0]+X[0][1]*Y[1][0], X[0][0]*Y[0][1]+X[0][1]*Y[1][1]],
+                       [X[1][0]*Y[0][0]+X[1][1]*Y[1][0], X[1][0]*Y[0][1]+X[1][1]*Y[1][1]]];
+const inv2 = M => { const d=M[0][0]*M[1][1]-M[0][1]*M[1][0]; return [[M[1][1]/d,-M[0][1]/d],[-M[1][0]/d,M[0][0]/d]]; };
+const scale2 = (M,s) => M.map(r => r.map(x => x*s));
+const gcd = (a,b) => { a=Math.abs(a); b=Math.abs(b); while(b){ [a,b]=[b,a%b]; } return a; };
+const fix = (x,n=6) => (Math.abs(x)<5e-13?0:x).toFixed(n);
+const sgn = (x,n) => { const v=+fix(x,n); return (v>=0?'+':'−')+Math.abs(v).toFixed(n); };
+const normDeg = t => { t = ((t%360)+360)%360; return t>180 ? t-360 : t; };
+const isInt = x => Number.isInteger(x);
+const isFin = x => Number.isFinite(x);
+
+/* ---------- twist matrix T = P/d (layer coords -> base coords) ---------- */
+function reduceT(P,d){ let g=d; for(const r of P) for(const x of r) g=gcd(g,x); if(g>1){ P=P.map(r=>r.map(x=>x/g)); d/=g; } return {P,d}; }
+function Tfromcoin(l,u,C,l2o,u2o){
+  const l2 = l2o || mulv(C,l), u2 = u2o || mulv(C,u);
+  const L=[[l[0],l2[0]],[l[1],l2[1]]], U=[[u[0],u2[0]],[u[1],u2[1]]];
+  const det=U[0][0]*U[1][1]-U[0][1]*U[1][0];
+  if(det===0) throw new Error('The two layer points are collinear; they must be independent.');
+  if(L[0][0]*L[1][1]-L[0][1]*L[1][0]===0) throw new Error('The two base points are collinear; they must be independent.');
+  let P=mulm(L,[[U[1][1],-U[0][1]],[-U[1][0],U[0][0]]]), d=det;
+  if(d<0){ d=-d; P=P.map(r=>r.map(x=>-x)); }
+  return reduceT(P,d);
+}
+function nCellsPair({P,d}){                    // base cells in the pairwise supercell, O(1) via Smith invariants
+  const dt=P[0][0]*P[1][1]-P[0][1]*P[1][0];
+  const s1=gcd(gcd(P[0][0],P[0][1]),gcd(P[1][0],P[1][1])), s2=Math.abs(dt)/s1;
+  return Math.abs(dt)*(d/gcd(d,s1))*(d/gcd(d,s2))/(d*d);
+}
+function analyse(T, A, B){                     // F = A T B^-1 = R(theta) U   (polar decomposition)
+  const Tf = T.P.map(r => r.map(x => x/T.d));
+  const F = mulm(mulm(A,Tf), inv2(B));
+  const th = Math.atan2(F[1][0]-F[0][1], F[0][0]+F[1][1]);
+  const c=Math.cos(th), s=Math.sin(th);
+  const U = [[c*F[0][0]+s*F[1][0], c*F[0][1]+s*F[1][1]],[-s*F[0][0]+c*F[1][0], -s*F[0][1]+c*F[1][1]]];
+  const e11=U[0][0]-1, e22=U[1][1]-1, e12=(U[0][1]+U[1][0])/2;
+  const tr=(e11+e22)/2, dd=Math.hypot((e11-e22)/2, e12);
+  return { F, U, theta:th*180/Math.PI, strain:Math.max(Math.abs(tr+dd),Math.abs(tr-dd)) };
+}
+const commutes = ({P},C) => { const a=mulm(P,C).flat(), b=mulm(C,P).flat(); return a.every((x,i)=>x===b[i]); };
+const Tstr = T => T.d===1 ? `[[${T.P[0].join(', ')}], [${T.P[1].join(', ')}]]` : `(1/${T.d})·[[${T.P[0].join(', ')}], [${T.P[1].join(', ')}]]`;
+
+/* ============================================================
+   State
+   ============================================================ */
+let layers = [];
+let idc = 0;
+let view = { yaw:-0.45, pitch:1.0, zoom:1, panX:0, panY:0 };
+let projMode = 'persp';
+let colorMode = 'layer';
+let geo = null;
+
+const Aof = L => scale2(TYPES[L.type].A, L.a);
+const foldOf = L => TYPES[L.type].fold;
+const IDENT = { l:[1,0], u:[1,0] };
+const defaultTwist = fold => fold===4 ? {l:[1,2],u:[2,1]} : {l:[6,7],u:[7,6]};
+
+function newLayer(over={}){
+  const L = Object.assign({
+    id: ++idc, mat:'graphene', type:'hex', a:2.46, z:0, shift:[0,0], orb:1, open:true, visible:true,
+    color: PALETTE[(idc-1)%PALETTE.length],
+    mode:'angle', pair:defaultTwist(6),
+    second:{ on:false, l:[0,0], u:[0,0] },
+    tm:{ P:[[1,0],[0,1]], d:1 },
+    tgt:{ theta:5.09, win:0.5, maxCells:20000, tol:0, rows:null, info:'', busy:false, adv:false },
+    res:null,
+  }, over);
+  L.pair = { l:L.pair.l.slice(), u:L.pair.u.slice() };
+  L.shift = L.shift.slice();
+  L.second = JSON.parse(JSON.stringify(L.second));
+  L.tm = JSON.parse(JSON.stringify(L.tm));
+  L.tgt = Object.assign({ theta:5.09, win:0.5, maxCells:20000, tol:0, adv:false }, L.tgt, { rows:null, info:'', busy:false });
+  return L;
+}
+
+function nextDefault(){
+  // new layer repeats the twist of the layer two below it (base -> untwisted): alternating stacks stay small
+  const n = layers.length, prev = layers[n-1];
+  const m = MATS[prev.mat] || {};
+  const gap = n>=2 ? prev.z - layers[n-2].z : (m.d || 3.35);
+  const o = { mat:prev.mat, type:prev.type, a:prev.a, orb:prev.orb, z:+(prev.z + (gap>0?gap:3.35)).toFixed(4) };
+  if(n===1) o.pair = defaultTwist(foldOf(prev));
+  else if(n===2){ o.pair = IDENT; o.mode='coin'; o.tgt={ theta:0 }; }
+  else { const src=layers[n-2]; Object.assign(o,{ mode:src.mode, pair:src.pair, tm:src.tm, second:src.second, tgt:{ theta:src.tgt.theta, win:src.tgt.win, maxCells:src.tgt.maxCells, tol:src.tgt.tol } }); }
+  return o;
+}
+
+/* ============================================================
+   Per-layer validation + twist resolution
+   ============================================================ */
+function resolve(i){
+  const L = layers[i], base = layers[0];
+  const out = { ok:false, err:'', warn:'' };
+  try{
+    if(!(isFin(L.a) && L.a>0)) throw new Error('Lattice constant a must be a positive number.');
+    if(!isFin(L.z)) throw new Error('Height z must be a number.');
+    if(!isFin(L.shift[0]) || !isFin(L.shift[1])) throw new Error('Shift must be numbers.');
+    if(!(isInt(L.orb) && L.orb>=1)) throw new Error('Orbitals per site must be an integer ≥ 1.');
+    if(i===0){ Object.assign(out,{ ok:true, T:{P:[[1,0],[0,1]],d:1}, an:{theta:0,strain:0,U:[[1,0],[0,1]],F:[[1,0],[0,1]]}, cells:1 }); L.res=out; return; }
+    if(!(isFin(base.a) && base.a>0)) throw new Error('Fix the base layer first.');
+    const A=Aof(base), B=Aof(L);
+    let T;
+    if(L.mode==='coin' || L.mode==='angle'){
+      const l=L.pair.l, u=L.pair.u;
+      if(![...l,...u].every(isInt)) throw new Error('Pair indices must be integers.');
+      if(!l[0]&&!l[1]) throw new Error('Base point must be non-zero.');
+      if(!u[0]&&!u[1]) throw new Error('Layer point must be non-zero.');
+      if(L.second.on){
+        const l2=L.second.l, u2=L.second.u;
+        if(![...l2,...u2].every(isInt)) throw new Error('Second-pair indices must be integers.');
+        T = Tfromcoin(l,u,null,l2,u2);
+      } else {
+        if(foldOf(base) !== foldOf(L)) throw new Error('This lattice has a different rotation symmetry from the base: open “Exact ID”, tick “Second pair” and enter one.');
+        T = Tfromcoin(l,u,CROT[foldOf(base)]);
+      }
+    } else {
+      const d=L.tm.d, P=L.tm.P;
+      if(!(isInt(d) && d>=1)) throw new Error('Denominator must be an integer ≥ 1.');
+      if(!P.flat().every(isInt)) throw new Error('Matrix entries must be integers.');
+      if(P[0][0]*P[1][1]-P[0][1]*P[1][0]===0) throw new Error('T must be invertible.');
+      T = reduceT(P.map(r=>r.slice()), d);
+    }
+    if(T.P[0][0]*T.P[1][1]-T.P[0][1]*T.P[1][0] < 0) throw new Error('This twist mirrors the layer (det T < 0), which is not supported. Swap the order of the two layer points, or use a matrix with a positive determinant.');
+    const an = analyse(T,A,B);
+    Object.assign(out, { ok:true, T, an, cells:nCellsPair(T) });
+    if(an.strain > 0.10) out.warn = `Strain ${(an.strain*100).toFixed(1)}% is unphysically large. Check the pair or the lattice constants.`;
+    else if(an.strain > 1e-9) out.warn = `The layers only fit with ${(an.strain*100).toFixed(3)}% strain; the generated code applies it.`;
+  }catch(e){ out.err = e.message; }
+  L.res = out;
+}
+
+/* ============================================================
+   Stack-wide exact supercell
+   ============================================================ */
+function stackGeometry(){
+  const A0 = Aof(layers[0]);
+  let S = [[qi(1),qi(0)],[qi(0),qi(1)]];
+  for(let i=1;i<layers.length;i++){
+    const {P,d} = layers[i].res.T, D=BigInt(d);
+    S = intersect(S, [[new Q(BigInt(P[0][0]),D),new Q(BigInt(P[1][0]),D)],[new Q(BigInt(P[0][1]),D),new Q(BigInt(P[1][1]),D)]]);
+  }
+  const cells = Math.abs(detQ(S).num());
+  // Lagrange-reduce the integer basis (base lattice coords) with the real metric
+  let a=[S[0][0].num(),S[0][1].num()], b=[S[1][0].num(),S[1][1].num()];
+  const dot = (v,w) => { const p=mulv(A0,v), q=mulv(A0,w); return p[0]*q[0]+p[1]*q[1]; };
+  for(let k=0;k<500;k++){
+    if(dot(a,a)>dot(b,b)+1e-9) [a,b]=[b,a];
+    const m=Math.round(dot(a,b)/dot(a,a)); if(m===0) break;
+    b=[b[0]-m*a[0], b[1]-m*a[1]];
+  }
+  const Sf = [[a[0],b[0]],[a[1],b[1]]];
+  const counts = layers.map(L => {
+    const M = mulm(inv2(L.res.T.P.map(r=>r.map(x=>x/L.res.T.d))), Sf);
+    return Math.round(Math.abs(M[0][0]*M[1][1]-M[0][1]*M[1][0]));
+  });
+  const atoms = layers.map((L,i)=>counts[i]*TYPES[L.type].basis.length);
+  return { ia:a.map(Math.round), a:mulv(A0,a), b:mulv(A0,b), cells, atoms, total:atoms.reduce((x,y)=>x+y,0) };
+}
+
+/* ============================================================
+   Point / bond cloud
+   ============================================================ */
+const BUDGET = 60000, FALLBACK = 16000;
+function buildCloud(G){
+  const A0 = Aof(layers[0]);
+  const S = [[G.a[0],G.b[0]],[G.a[1],G.b[1]]], Si = inv2(S);
+  let tiles = +document.getElementById('tiles').value;
+  if(G.total*tiles*tiles > BUDGET) tiles = 1;
+  const full = G.total <= BUDGET;
+  let R = 0;
+  if(!full){
+    let dens=0; layers.forEach(L=>{ const B=Aof(L); dens += TYPES[L.type].basis.length/Math.abs(B[0][0]*B[1][1]-B[0][1]*B[1][0]); });
+    R = Math.sqrt(FALLBACK/(Math.PI*dens));
+  }
+  const lo = -(tiles-1)/2, hi = lo + tiles;
+  const out = layers.map(L => {
+    const T = TYPES[L.type];
+    const M = mulm(A0, L.res.T.P.map(r=>r.map(x=>x/L.res.T.d))), Mi = inv2(M);
+    const F = L.res.an.F;
+    // shift lives in the strained layer's own frame (x along its first lattice vector) and rotates with it by theta + alpha
+    const B0 = mulv(L.res.an.U, [Aof(L)[0][0], Aof(L)[1][0]]);
+    const rot = Math.atan2(F[1][0]-F[0][1],F[0][0]+F[1][1]) + Math.atan2(B0[1], B0[0]);
+    const sh = [L.shift[0]*Math.cos(rot)-L.shift[1]*Math.sin(rot), L.shift[0]*Math.sin(rot)+L.shift[1]*Math.cos(rot)];
+    const basU = T.basis.map(bp => mulv(F, [bp[0]*L.a, bp[1]*L.a]));
+    const corners = full ? [[lo,lo],[hi,lo],[lo,hi],[hi,hi]].map(st=>mulv(S,st)) : [[-R,-R],[R,-R],[-R,R],[R,R]];
+    const us = corners.map(c=>mulv(Mi,c));
+    const u1a=Math.floor(Math.min(...us.map(c=>c[0])))-1, u1b=Math.ceil(Math.max(...us.map(c=>c[0])))+1;
+    const u2a=Math.floor(Math.min(...us.map(c=>c[1])))-1, u2b=Math.ceil(Math.max(...us.map(c=>c[1])))+1;
+    const xs=[], ys=[], bx=[];
+    const atom = (u1,u2,k) => { const p=mulv(M,[u1,u2]); return [p[0]+basU[k][0]+sh[0], p[1]+basU[k][1]+sh[1]]; };
+    for(let u1=u1a;u1<=u1b;u1++) for(let u2=u2a;u2<=u2b;u2++){
+      const p = mulv(M,[u1,u2]);
+      if(full){
+        const st = mulv(Si,p);
+        if(st[0]<lo-1e-9||st[0]>=hi-1e-9||st[1]<lo-1e-9||st[1]>=hi-1e-9) continue;
+      } else if(p[0]*p[0]+p[1]*p[1] > R*R) continue;
+      for(let k=0;k<basU.length;k++){ const q=atom(u1,u2,k); xs.push(q[0]); ys.push(q[1]); }
+      for(const [k,k2,d1,d2] of T.bonds){ const p1=atom(u1,u2,k), p2=atom(u1+d1,u2+d2,k2); bx.push(p1[0],p1[1],p2[0],p2[1]); }
+    }
+    return { x:Float32Array.from(xs), y:Float32Array.from(ys), b:Float32Array.from(bx), z:L.z, reg:null };
+  });
+  for(let i=1;i<out.length;i++) out[i].reg = registry(out[i-1], out[i], layers[i].a);
+  return { pts:out, full, R, tiles };
+}
+
+/* Local registry of a layer on the layer below: how much of the neighbourhood sits right on top of an atom
+   below (AA: everything, AB: about half). Smoothed over ~2 lattice constants and stretched to [0,1]. */
+function registry(prev, cur, a){
+  const n=cur.x.length; if(!n || !prev.x.length) return null;
+  const key=(ix,iy)=>ix*100003+iy;
+  const grid=(xs,ys,cs)=>{ const g=new Map(); for(let k=0;k<xs.length;k++){ const kk=key(Math.floor(xs[k]/cs),Math.floor(ys[k]/cs)); const arr=g.get(kk); if(arr) arr.push(k); else g.set(kk,[k]); } return g; };
+  const cs1=a*1.2, g1=grid(prev.x,prev.y,cs1), sig=0.2*a;
+  const w=new Float32Array(n);
+  for(let k=0;k<n;k++){
+    const ix=Math.floor(cur.x[k]/cs1), iy=Math.floor(cur.y[k]/cs1); let d2=Infinity;
+    for(let dx=-1;dx<=1;dx++) for(let dy=-1;dy<=1;dy++){ const arr=g1.get(key(ix+dx,iy+dy)); if(!arr) continue;
+      for(const j of arr){ const ex=prev.x[j]-cur.x[k], ey=prev.y[j]-cur.y[k], dd=ex*ex+ey*ey; if(dd<d2) d2=dd; } }
+    w[k]=Math.exp(-d2/(sig*sig));
+  }
+  const cs2=a*2.4, g2=grid(cur.x,cur.y,cs2), r2=(1.2*cs2)*(1.2*cs2)/1.44, sm=new Float32Array(n);
+  for(let k=0;k<n;k++){
+    const ix=Math.floor(cur.x[k]/cs2), iy=Math.floor(cur.y[k]/cs2); let sum=0, c=0;
+    for(let dx=-1;dx<=1;dx++) for(let dy=-1;dy<=1;dy++){ const arr=g2.get(key(ix+dx,iy+dy)); if(!arr) continue;
+      for(const j of arr){ const ex=cur.x[j]-cur.x[k], ey=cur.y[j]-cur.y[k]; if(ex*ex+ey*ey<=cs2*cs2) { sum+=w[j]; c++; } } }
+    sm[k]=sum/c;
+  }
+  // absolute scale: ~0.15 is what unrelated (incommensurate-like) registry averages to, 1 is perfect AA overlap
+  for(let k=0;k<n;k++) sm[k]=Math.max(0, Math.min(1, (sm[k]-0.15)/0.85));
+  return sm;
+}
+const RAMP=['#6c3b9a','#5a4ca8','#4f5fb0','#2f84b4','#27a597','#58c36e','#a8d93a','#fde725'];
+const rampCol = t => RAMP[Math.max(0,Math.min(RAMP.length-1,Math.floor(t*RAMP.length)))];
+
+/* ============================================================
+   Canvas 3D renderer
+   ============================================================ */
+const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+let dpr = 1;
+function resizeCv(){ dpr=window.devicePixelRatio||1; const r=cv.getBoundingClientRect(); cv.width=Math.max(10,Math.round(r.width*dpr)); cv.height=Math.max(10,Math.round(r.height*dpr)); draw(); }
+new ResizeObserver(resizeCv).observe(document.getElementById('viewer'));
+
+const spriteCache = new Map();
+function sprite(col, r){                        // cached round atom per colour and 0.25 px radius bucket
+  const rb = Math.max(0.5, Math.round(r*4)/4), key = col+'|'+rb;
+  let c = spriteCache.get(key);
+  if(c) return c;
+  c = document.createElement('canvas');
+  const R = Math.ceil(rb)+1; c.width=c.height=2*R; c.r=R;
+  const g = c.getContext('2d');
+  if(rb>2.5){
+    const grd = g.createRadialGradient(R-rb*0.35,R-rb*0.35,rb*0.05,R,R,rb);
+    grd.addColorStop(0,'#ffffff'); grd.addColorStop(0.3,col); grd.addColorStop(1,col);
+    g.fillStyle = grd;
+  } else g.fillStyle = col;
+  g.beginPath(); g.arc(R,R,rb,0,Math.PI*2); g.fill();
+  spriteCache.set(key,c);
+  return c;
+}
+
+function camera(){
+  const {G, cloud} = geo, W=cv.width, H=cv.height;
+  const zs = +document.getElementById('zs').value;
+  const cx = cloud.full ? (G.a[0]+G.b[0])/2 : 0, cy = cloud.full ? (G.a[1]+G.b[1])/2 : 0;
+  const zmin=Math.min(...layers.map(l=>l.z)), zmax=Math.max(...layers.map(l=>l.z));
+  const cz=(zmin+zmax)/2*zs;
+  const span = cloud.full ? Math.max(Math.hypot(G.a[0]+G.b[0],G.a[1]+G.b[1]),Math.hypot(G.a[0]-G.b[0],G.a[1]-G.b[1]))/2*cloud.tiles : cloud.R;
+  const rr = Math.max(span*1.05, (zmax-zmin)*zs/2, 1e-3);
+  const cyw=Math.cos(view.yaw), syw=Math.sin(view.yaw), cp=Math.cos(view.pitch), sp=Math.sin(view.pitch);
+  const ortho = projMode==='ortho';
+  const Dcam = 3.2*rr, f = Math.min(W,H)/2*0.88*(ortho ? 1/rr : (Dcam-rr)/rr) * view.zoom;
+  const ox = W/2 + view.panX*dpr, oy = H/2 + view.panY*dpr;
+  const proj = (x,y,z) => {
+    x-=cx; y-=cy; z=z*zs-cz;
+    const x1=cyw*x-syw*y, y1=syw*x+cyw*y;
+    const t=-cp*y1+sp*z, sy=sp*y1+cp*z;
+    const s = ortho ? f : f/(Dcam-t);
+    return [ox+x1*s, oy-sy*s, t, s];
+  };
+  return { proj, zmin, zmax, cx, cy };
+}
+
+function draw(){
+  const W=cv.width, H=cv.height;
+  ctx.clearRect(0,0,W,H);
+  if(!geo || !geo.cloud) return;
+  const {G, cloud} = geo;
+  const { proj, zmin, zmax, cx, cy } = camera();
+  const showCell = document.getElementById('showcell').checked;
+  const showBonds = document.getElementById('showbonds').checked;
+  const cellCol = css('--cell');
+  const cs = [[0,0],G.a,[G.a[0]+G.b[0],G.a[1]+G.b[1]],G.b];
+  const vis = layers.map((L,i)=>i).filter(i=>layers[i].visible);
+  const order = vis.map(i=>({i,t:proj(cx,cy,layers[i].z)[2]})).sort((p,q)=>p.t-q.t);
+  if(showCell && zmax>zmin){
+    ctx.strokeStyle=cellCol; ctx.lineWidth=1.2*dpr; ctx.globalAlpha=.7; ctx.setLineDash([5*dpr,4*dpr]);
+    cs.forEach(c=>{ const p=proj(c[0],c[1],zmin), q=proj(c[0],c[1],zmax); ctx.beginPath(); ctx.moveTo(p[0],p[1]); ctx.lineTo(q[0],q[1]); ctx.stroke(); });
+    ctx.setLineDash([]);
+  }
+  order.forEach(({i},rank)=>{
+    const L=layers[i], P=cloud.pts[i], col=L.color;
+    const depthA = order.length>1 ? 0.62 + 0.33*rank/(order.length-1) : 0.95;   // far layers dimmer
+    const sAt = proj(cx,cy,L.z)[3];
+    const bondPx = 0.5774*L.a*sAt;                         // nearest-neighbour distance on screen (honeycomb-ish)
+    if(showBonds && P.b.length && bondPx > 3.5*dpr){
+      ctx.strokeStyle=col; ctx.globalAlpha=depthA*0.55; ctx.lineWidth=Math.max(0.6*dpr, Math.min(2.2*dpr, 0.035*L.a*sAt));
+      ctx.beginPath();
+      for(let k=0;k<P.b.length;k+=4){
+        const p=proj(P.b[k],P.b[k+1],P.z), q=proj(P.b[k+2],P.b[k+3],P.z);
+        ctx.moveTo(p[0],p[1]); ctx.lineTo(q[0],q[1]);
+      }
+      ctx.stroke();
+    }
+    const dense = bondPx < 6*dpr;                          // atoms only a few px apart: show the moiré, not the atoms
+    const regMode = colorMode==='reg' && geo.cloud.pts.length>1;
+    ctx.globalAlpha = regMode && !P.reg ? 0.28 : (dense ? Math.min(1, depthA+0.1) : depthA);
+    const k0 = TYPES[L.type].r*L.a;
+    for(let k=0;k<P.x.length;k++){
+      const q=proj(P.x[k],P.y[k],P.z);
+      const c = regMode && P.reg ? rampCol(P.reg[k]) : col;
+      const s=sprite(c, Math.min(9*dpr, dense ? Math.max(0.6*dpr, 0.32*bondPx*q[3]/sAt) : Math.max(0.9*dpr, k0*q[3])));
+      ctx.drawImage(s, q[0]-s.r, q[1]-s.r);
+    }
+    if(showCell){
+      ctx.strokeStyle=cellCol; ctx.lineWidth=1.6*dpr; ctx.globalAlpha=.9;
+      ctx.beginPath(); cs.forEach((c,k)=>{ const q=proj(c[0],c[1],L.z); k?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1]); }); ctx.closePath(); ctx.stroke();
+    }
+  });
+  ctx.globalAlpha=1;
+}
+
+/* ---------- controls: rotate, pan (shift/right drag, 2 fingers), zoom to cursor, pinch ---------- */
+const ptrs = new Map();
+let gesture = null;
+function zoomAt(k, mx, my){                     // keep the point under (mx,my) fixed
+  const nz = Math.max(0.2, Math.min(80, view.zoom*k)); k = nz/view.zoom;
+  const r = cv.getBoundingClientRect();
+  const dx = mx - r.width/2 - view.panX, dy = my - r.height/2 - view.panY;
+  view.panX -= dx*(k-1); view.panY -= dy*(k-1); view.zoom = nz;
+}
+cv.addEventListener('contextmenu', e=>e.preventDefault());
+cv.addEventListener('pointerdown', e=>{
+  if(cv.classList.contains('locked')) return;
+  cv.setPointerCapture(e.pointerId);
+  ptrs.set(e.pointerId,{x:e.offsetX,y:e.offsetY});
+  gesture = { pan: e.button===2 || e.button===1 || e.shiftKey };
+});
+cv.addEventListener('pointermove', e=>{
+  if(!ptrs.has(e.pointerId)) return;
+  const prev = ptrs.get(e.pointerId), cur = {x:e.offsetX,y:e.offsetY};
+  if(ptrs.size===2){
+    const [idA,idB] = [...ptrs.keys()], other = ptrs.get(idA===e.pointerId?idB:idA);
+    const d0=Math.hypot(prev.x-other.x,prev.y-other.y), d1=Math.hypot(cur.x-other.x,cur.y-other.y);
+    if(d0>0) zoomAt(d1/d0,(cur.x+other.x)/2,(cur.y+other.y)/2);
+    view.panX += (cur.x-prev.x)/2; view.panY += (cur.y-prev.y)/2;
+  } else if(gesture && gesture.pan){
+    view.panX += cur.x-prev.x; view.panY += cur.y-prev.y;
+  } else {
+    view.yaw += (cur.x-prev.x)*0.008;
+    view.pitch = Math.max(0, Math.min(Math.PI/2, view.pitch + (cur.y-prev.y)*0.008));
+    markView(null);
+  }
+  ptrs.set(e.pointerId,cur); draw();
+});
+const endPtr = e => { ptrs.delete(e.pointerId); if(!ptrs.size) gesture=null; };
+cv.addEventListener('pointerup', endPtr); cv.addEventListener('pointercancel', endPtr);
+cv.addEventListener('wheel', e=>{ e.preventDefault(); zoomAt(Math.exp(-e.deltaY*0.0015), e.offsetX, e.offsetY); draw(); }, {passive:false});
+cv.addEventListener('dblclick', ()=>setView('iso'));
+function markView(v){ document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('on',b.dataset.view===v)); }
+function setProj(p){ projMode=p; document.querySelectorAll('[data-proj]').forEach(b=>b.classList.toggle('on',b.dataset.proj===p)); }
+function setView(v){
+  view = { zoom:1, panX:0, panY:0, yaw: v==='iso'?-0.45:0, pitch: v==='top'?Math.PI/2 : v==='side'?0 : 1.0 };
+  if(v==='top') setProj('ortho');               // a perspective top view shows parallax double outlines
+  if(v==='side'){ const z=document.getElementById('zs'); if(+z.value<10){ z.value=10; document.getElementById('zsv').textContent='10'; } }
+  markView(v); draw();
+}
+document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>setView(b.dataset.view));
+document.querySelectorAll('[data-proj]').forEach(b=>b.onclick=()=>{ setProj(b.dataset.proj); draw(); });
+document.getElementById('zs').oninput = e => { document.getElementById('zsv').textContent=e.target.value; draw(); };
+document.getElementById('showcell').onchange = draw;
+document.getElementById('showbonds').onchange = draw;
+document.getElementById('colormode').onchange = e => { colorMode=e.target.value; if(colorMode==='reg' && layers.length>1) setView('top'); updateLegend(); draw(); };
+document.getElementById('tiles').onchange = () => update();
+if(matchMedia('(pointer:coarse)').matches) cv.classList.add('locked');
+document.getElementById('lockbtn').onclick = e => {
+  const locked = cv.classList.toggle('locked');
+  e.target.textContent = locked ? '✋ Interact' : '🔒 Scroll page';
+};
+
+/* ============================================================
+   UI: layer cards
+   ============================================================ */
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const valStr = v => isFin(v) ? v : '';
+const ARIA = { a:'Lattice constant', z:'Height z', orb:'Orbitals per site', 'tgt.theta':'Target twist angle in degrees', 'tgt.win':'Search window in degrees', 'tgt.maxCells':'Maximum supercell size in base cells', 'tgt.tol':'Maximum strain in percent',
+  'pair.l.0':'Base point, first coordinate', 'pair.l.1':'Base point, second coordinate', 'pair.u.0':'Layer point, first coordinate', 'pair.u.1':'Layer point, second coordinate',
+  'second.l.0':'Second base point, first coordinate', 'second.l.1':'Second base point, second coordinate', 'second.u.0':'Second layer point, first coordinate', 'second.u.1':'Second layer point, second coordinate',
+  'shift.0':'Shift x', 'shift.1':'Shift y', 'tm.P.0.0':'T entry row 1 column 1', 'tm.P.0.1':'T entry row 1 column 2', 'tm.P.1.0':'T entry row 2 column 1', 'tm.P.1.1':'T entry row 2 column 2', 'tm.d':'T denominator' };
+const num = (i,key,val,extra='') => `<input type="number" data-i="${i}" data-k="${key}" value="${valStr(val)}" aria-label="${ARIA[key]||key}" ${extra}>`;
+const matName = L => MATS[L.mat].type ? MATS[L.mat].name : TYPES[L.type].name;
+
+function cardHTML(L,i){
+  const matOpts = Object.entries(MATS).map(([k,v])=>`<option value="${k}" ${k===L.mat?'selected':''}>${v.name}</option>`).join('');
+  const typeOpts = Object.entries(TYPES).map(([k,v])=>`<option value="${k}" ${k===L.type?'selected':''}>${v.name}</option>`).join('');
+  let h = `<details class="layer" data-card="${i}" ${L.open?'open':''}>
+    <summary><span class="chev"></span><span class="dot" style="background:${L.color}"></span>
+      <span class="ttl">${i===0?'Base layer':'Layer '+i} <span class="tag">· ${esc(matName(L))}</span></span>
+      <button class="iconbtn" data-act="vis" data-i="${i}" title="${L.visible?'Hide':'Show'} in viewer">${L.visible?'◉':'○'}</button>
+      ${i>0?`<button class="iconbtn" data-act="rm" data-i="${i}" title="Remove layer">✕</button>`:''}
+    </summary><div class="body">
+      <div class="grid2">
+        <div class="fld"><label>Material</label><select class="inp" data-i="${i}" data-k="mat" aria-label="Material">${matOpts}</select></div>
+        <div class="fld"><label>Lattice</label><select class="inp" data-i="${i}" data-k="type" aria-label="Lattice type">${typeOpts}</select></div>
+        <div class="fld"><label>Lattice constant a</label>${num(i,'a',L.a,'step="0.001" min="0"')}</div>
+        <div class="fld"><label>${i===0?'Height z (fixed at 0)':'Height z'}</label>${num(i,'z',L.z,`step="0.01" ${i===0?'disabled':''}`)}</div>
+        <div class="fld"><label>Orbitals / site</label>${num(i,'orb',L.orb,'step="1" min="1"')}</div>
+        <div class="fld"><label>Colour</label><input type="color" data-i="${i}" data-k="color" value="${L.color}" aria-label="Layer colour"></div>
+      </div>`;
+  if(i>0){
+    const S=L.tgt, differs = L.type!==layers[0].type || Math.abs(L.a/layers[0].a-1)>1e-12;
+    h += `<div class="sec">Twist relative to base</div>
+      <div class="grid2">
+        <div class="fld"><label title="Positive = counter-clockwise rotation of this layer relative to the base, viewed from +z">Target angle θ ≈ (°, + = counter-clockwise)</label>${num(i,'tgt.theta',S.theta,'step="0.01"')}</div>
+        <div class="fld"><label>Search window ± (°)</label>${num(i,'tgt.win',S.win,'step="0.1" min="0.01"')}</div>
+        <div class="fld"><label>Max supercell (base cells)</label>${num(i,'tgt.maxCells',S.maxCells,'step="1000" min="10"')}</div>
+        <div class="fld"><label>Max strain (%)${differs?'':' · 0 = exact'}</label>${num(i,'tgt.tol',S.tol,'step="0.05" min="0"')}</div>
+      </div>
+      <div class="hint" id="sinfo-${i}" aria-live="polite">${esc(S.info)}</div>
+      <div class="pairrow" style="margin-top:4px">
+        ${S.busy?`<button class="btn sm" data-act="cancel" data-i="${i}">Cancel search</button>`:''}
+        ${S.suggest?`<button class="btn sm" data-act="raise" data-i="${i}">Raise max supercell to ${S.suggest.toLocaleString()} and search again</button>`:''}
+      </div>
+      <div id="stab-${i}">${optionsTable(i)}</div>
+      ${L.mode!=='angle'?'<div class="msg warn">Using the exact ID entered below. Pick an option above to switch back.</div>':''}
+      <details class="adv" data-adv="${i}" ${S.adv||L.mode!=='angle'?'open':''} style="margin-top:10px">
+        <summary class="hint" style="cursor:pointer">Exact ID (advanced): coincidence pair or rational matrix</summary>
+        <div class="seg" style="margin-top:6px">${[['coin','Coincidence pair'],['tm','Rational matrix']].map(([m,n])=>`<button data-act="mode" data-i="${i}" data-m="${m}" class="${(L.mode===m||(L.mode==='angle'&&m==='coin'))?'on':''}">${n}</button>`).join('')}</div>`;
+    if(L.mode!=='tm'){
+      h += `<div class="lbl">Base point (l₁, l₂) coincides with this layer’s point (u₁, u₂)</div>
+      <div class="pairrow"><span class="par">(</span>${num(i,'pair.l.0',L.pair.l[0],'step="1"')}${num(i,'pair.l.1',L.pair.l[1],'step="1"')}<span class="par">)</span>
+        <span class="arrow">↔</span>
+        <span class="par">(</span>${num(i,'pair.u.0',L.pair.u[0],'step="1"')}${num(i,'pair.u.1',L.pair.u[1],'step="1"')}<span class="par">)</span></div>
+      <label class="hint" style="display:flex;gap:6px;align-items:center;cursor:pointer"><input type="checkbox" data-i="${i}" data-k="second.on" ${L.second.on?'checked':''}> Second pair (needed when symmetries differ)</label>`;
+      if(L.second.on) h += `<div class="pairrow" style="margin-top:6px"><span class="par">(</span>${num(i,'second.l.0',L.second.l[0])}${num(i,'second.l.1',L.second.l[1])}<span class="par">)</span><span class="arrow">↔</span><span class="par">(</span>${num(i,'second.u.0',L.second.u[0])}${num(i,'second.u.1',L.second.u[1])}<span class="par">)</span></div>`;
+    } else {
+      h += `<div class="lbl">T = (1/d)·[[a, b], [c, e]] maps this layer’s lattice coords → base lattice coords</div>
+      <div class="pairrow"><div class="matgrid">${num(i,'tm.P.0.0',L.tm.P[0][0])}${num(i,'tm.P.0.1',L.tm.P[0][1])}${num(i,'tm.P.1.0',L.tm.P[1][0])}${num(i,'tm.P.1.1',L.tm.P[1][1])}</div>
+      <span class="arrow">÷ d</span>${num(i,'tm.d',L.tm.d,'min="1" step="1" style="width:70px"')}</div>`;
+    }
+    h += `<p class="hint">The integers are the exact ID of the twist; θ and strain are derived from them.</p></details>`;
+    h += `<div class="sec">Placement</div>
+      <p class="hint" style="margin-top:2px">Shift is measured in the layer’s own frame (x along its first lattice vector) and rotates with it.</p>
+      <div class="grid2"><div class="fld"><label>Shift x</label>${num(i,'shift.0',L.shift[0],'step="0.01"')}</div><div class="fld"><label>Shift y</label>${num(i,'shift.1',L.shift[1],'step="0.01"')}</div></div>`;
+  }
+  h += `<div id="ro-${i}"></div></div></details>`;
+  return h;
+}
+
+function optionsTable(i){
+  const L=layers[i], rows=L.tgt.rows;
+  if(!rows) return '';
+  if(!rows.length) return '';
+  const a0=layers[0].a, homo = L.type===layers[0].type && Math.abs(L.a/layers[0].a-1)<1e-12;
+  const key=L.tgt.sort||'near';
+  const cmp = key==='cells' ? (x,y)=>x.cells-y.cells||Math.abs(x.theta-L.tgt.theta)-Math.abs(y.theta-L.tgt.theta)
+            : key==='strain' ? (x,y)=>x.strain-y.strain||x.cells-y.cells
+            : (x,y)=>Math.abs(x.theta-L.tgt.theta)-Math.abs(y.theta-L.tgt.theta)||x.cells-y.cells;
+  const shown=(L.tgt.all||rows).slice().sort(cmp).slice(0,MAX_ROWS);
+  const th=(k,lab,tip)=>`<th data-sort="${i}:${k}" class="${key===k?'sorted':''}" title="${tip}" tabindex="0" role="button" aria-label="Sort by ${tip}">${lab}${key===k?' ▾':''}</th>`;
+  return `<p class="hint" style="margin:4px 0 0">Sorted by ${key==='near'?'closest angle':key==='cells'?'smallest supercell':'least strain'}. Click a header to re-sort, a row to use it.</p>
+  <div class="scroll" role="region" aria-label="Commensurate twist options"><table class="res"><thead><tr>${th('near','θ (°)','angle closest to the target')}${th('near','Δθ','angle closest to the target')}${th('cells','cells','smallest supercell')}<th title="atoms of both layers in the supercell">sites</th><th title="moiré period a / (2 sin(θ/2)); only shown for two identical, unstrained layers">λ<sub>m</sub></th>${th('strain','strain','least strain')}</tr></thead><tbody>${
+    shown.map(r=>{
+      const sel = L.mode==='angle' && !L.second.on && r.l[0]===L.pair.l[0]&&r.l[1]===L.pair.l[1]&&r.u[0]===L.pair.u[0]&&r.u[1]===L.pair.u[1];
+      const lam = homo && r.strain<1e-9 && Math.abs(r.theta)>1e-9 ? (a0/(2*Math.sin(Math.abs(r.theta)*Math.PI/360))).toFixed(1) : '–';
+      return `<tr data-pick="${i}:${r.l}:${r.u}" class="${sel?'sel':''}" tabindex="0" role="button" aria-pressed="${sel}" title="pair (${r.l}) ↔ (${r.u}); supercell edge ${(a0*Math.sqrt(r.cells)).toFixed(1)}"><td>${sgn(r.theta,4)}</td><td>${sgn(r.theta-L.tgt.theta,3)}</td><td>${r.cells.toLocaleString()}</td><td>${r.sites.toLocaleString()}</td><td>${lam}</td><td>${r.strain<1e-9?'0':(r.strain*100).toFixed(3)+'%'}</td></tr>`;
+    }).join('')
+  }</tbody></table></div>`;
+}
+
+function readout(i){
+  const L=layers[i], el=$('ro-'+i), card=document.querySelector(`details[data-card="${i}"]`);
+  if(!el) return;
+  const r=L.res;
+  if(card) card.classList.toggle('err', !r.ok);
+  if(!r.ok){ el.innerHTML=`<div class="msg bad">${esc(r.err)}</div>`; return; }
+  if(i===0){ el.innerHTML=''; return; }
+  const exact=r.an.strain<1e-9;
+  el.innerHTML = `<div class="chips">
+      <span class="chip"><span>θ </span><b>${sgn(r.an.theta,5)}°</b></span>
+      <span class="chip ${exact?'ok':'warn'}"><span>strain </span><b>${exact?'0 (exact)':(r.an.strain*100).toFixed(4)+'%'}</b></span>
+      <span class="chip" title="Primitive cells of the base layer in the supercell shared with this layer"><span>cells vs base </span><b>${r.cells}</b></span>${(L.type===layers[0].type && Math.abs(L.a/layers[0].a-1)<1e-12 && exact && Math.abs(r.an.theta)>1e-9) ? `<span class="chip" title="Moiré period a / (2 sin(θ/2))"><span>moiré period </span><b>${(layers[0].a/(2*Math.sin(Math.abs(r.an.theta)*Math.PI/360))).toFixed(2)}</b></span>` : ''}</div>
+    <div class="idbox">ID <span class="m">T = ${esc(Tstr(r.T))}</span></div>
+    ${r.warn?`<div class="msg ${r.an.strain>0.1?'bad':'warn'}">${esc(r.warn)}</div>`:''}`;
+  const tag = card && card.querySelector('.ttl .tag');
+  if(tag) tag.textContent = `· ${matName(L)} · θ ${sgn(r.an.theta,3)}°`;
+}
+
+/* ============================================================
+   Angle search: target θ -> nearby commensurate options
+   ============================================================ */
+const MAX_ROWS = 60, MAX_FOUND = 4000;
+function finishSearch(i, found, autoPick, capped){
+  const L=layers[i], S=L.tgt;
+  const near=(x,y)=>Math.abs(x.theta-S.theta)-Math.abs(y.theta-S.theta)||x.cells-y.cells;
+  const all=[...found.values()].sort(near);
+  const rows=all.slice(0,MAX_ROWS);
+  S.all=all; S.rows=rows; S.busy=false;
+  const far = rows.length && Math.abs(rows[0].theta-S.theta) > Math.max(0.2*Math.abs(S.theta),0.02);
+  S.suggest = (!rows.length || far) && S.maxCells < 2e6 ? Math.min(2e6, S.maxCells*5) : null;
+  const period = S.fold===4 ? 90 : 60;                              // the lattice repeats under rotation by this angle
+  let fold = '';
+  if(Math.abs(S.theta) > period/2+1e-9){ let e=((S.theta%period)+period)%period; if(e>period/2) e-=period; fold=` · this lattice repeats every ${period}°, so ${S.theta}° ≡ ${+e.toFixed(4)}° (try that)`; }
+  S.info = rows.length ? `${found.size}${capped?'+':''} option${found.size===1?'':'s'} within ±${S.win}° of ${S.theta}° · closest ${sgn(rows[0].theta,4)}° (Δ ${sgn(rows[0].theta-S.theta,4)}°, ${rows[0].cells.toLocaleString()} cells)${capped?' · showing the smallest-supercell candidates; narrow the window or strain to see the rest':''}${far?' · no close match at this supercell size':''}${fold}` : `No commensurate option in this window${fold}.`;
+  if(autoPick && rows.length){ L.pair={l:rows[0].l.slice(),u:rows[0].u.slice()}; L.mode='angle'; L.second.on=false; }
+  markStale();
+  renderLayers();
+}
+function angleSearch(i, autoPick){
+  const L=layers[i], base=layers[0], S=L.tgt;
+  S.gen=(S.gen||0)+1; const gen=S.gen; S.fold=foldOf(base); S.suggest=null;
+  if(![S.theta,S.win,S.maxCells,S.tol,L.a,base.a].every(isFin) || S.win<=0 || S.maxCells<1){ S.rows=null; S.info='Fill in target angle, window and max supercell.'; renderLayers(); return; }
+  if(foldOf(base)!==foldOf(L)){ S.rows=[]; S.info='Different rotation symmetry from the base: use the exact ID (two pairs or a matrix).'; renderLayers(); return; }
+  const A=Aof(base), B=Aof(L), C=CROT[foldOf(base)], tol=Math.max(0,S.tol)/100;
+  const lo=S.theta-S.win, hi=S.theta+S.win, maxC=S.maxCells;
+  const same = L.type===base.type && Math.abs(L.a-base.a)<1e-12;
+  const found=new Map();
+  const nb0=TYPES[base.type].basis.length, nb1=TYPES[L.type].basis.length;
+  let capped=false;
+  const consider=(l,u)=>{
+    let T; try{ T=Tfromcoin(l,u,C); }catch(e){ return; }
+    const an=analyse(T,A,B);
+    if(an.theta<lo-1e-9||an.theta>hi+1e-9||an.strain>tol+1e-9) return;
+    if(Math.abs(an.theta)<1e-9 && an.strain<1e-9 && Math.abs(S.theta)>=0.05) return;   // the untwisted layer is not a 'match' for a real target
+    const cells=nCellsPair(T); if(cells>maxC) return;
+    const key=an.theta.toFixed(7)+'|'+an.strain.toFixed(7), o=found.get(key);
+    const score=l[0]*l[0]+l[1]*l[1]+u[0]*u[0]+u[1]*u[1];
+    const detT=Math.abs(T.P[0][0]*T.P[1][1]-T.P[0][1]*T.P[1][0])/(T.d*T.d);          // layer cells per base cell
+    const sites=cells*nb0 + Math.round(cells/detT)*nb1;
+    if(!o && found.size>=MAX_FOUND){ capped=true; return; }
+    if(!o||cells<o.cells||(cells===o.cells&&score<o.score)) found.set(key,{theta:an.theta,strain:an.strain,cells,sites,l:l.slice(),u:u.slice(),score});
+  };
+  if(same && tol===0){
+    // exact homobilayer: every commensurate twist is a swap pair (m,n) <-> (n,m) with gcd(m,n)=1
+    const M=Math.ceil(Math.sqrt(3*maxC))+2;
+    for(let m=0;m<=M;m++) for(let n=0;n<=M;n++){
+      if(m===n || gcd(m,n)!==1) continue;
+      if(m*m+m*n+n*n > 3*maxC+3 && m*m+n*n > 3*maxC+3) continue;
+      consider([m,n],[n,m]);
+    }
+    if(Math.abs(S.theta)<0.05) consider([1,0],[1,0]);
+    finishSearch(i, found, autoPick, capped);
+    return;
+  }
+  // general (strained / different lattice constant): match base and layer vectors of similar length
+  const N=Math.min(400, Math.ceil(Math.sqrt(3*maxC))+2);
+  const list=(M)=>{ const o=[]; for(let a=-N;a<=N;a++) for(let b=-N;b<=N;b++){ if(!a&&!b) continue; const p=mulv(M,[a,b]); if(p[1]<-1e-12||(Math.abs(p[1])<1e-12&&p[0]<0)) continue; o.push({len:Math.hypot(p[0],p[1]),ang:Math.atan2(p[1],p[0]),i:[a,b]}); } return o; };
+  const lb=list(A).sort((x,y)=>x.len-y.len), lu=list(B).sort((x,y)=>x.len-y.len);
+  const lmax = Math.sqrt(maxC*Math.abs(A[0][0]*A[1][1]-A[0][1]*A[1][0]))*1.8;
+  const first=(x)=>{ let a=0,b=lu.length; while(a<b){ const m=(a+b)>>1; if(lu[m].len<x) a=m+1; else b=m; } return a; };
+  let idx=0;
+  S.busy=true; S.info='Searching…'; renderLayers();
+  const step=()=>{
+    if(gen!==S.gen) return;                                // superseded by a newer search
+    const tEnd=performance.now()+25;
+    while(idx<lb.length && performance.now()<tEnd){
+      const pl=lb[idx++];
+      if(pl.len>lmax){ idx=lb.length; break; }
+      for(let k=first(pl.len*(1-tol-1e-9)); k<lu.length && lu[k].len<=pl.len*(1+tol+1e-9); k++){
+        const th=normDeg((pl.ang-lu[k].ang)*180/Math.PI);
+        if(th<lo-0.01||th>hi+0.01) continue;
+        consider(pl.i,lu[k].i);
+      }
+    }
+    if(capped && idx<lb.length && found.size>=MAX_FOUND){ idx=lb.length; }
+    if(idx<lb.length){ const el=$('sinfo-'+i); if(el) el.textContent=`Searching… ${Math.round(100*idx/lb.length)}%`; setTimeout(step,0); return; }
+    finishSearch(i, found, autoPick, capped);
+  };
+  setTimeout(step,0);
+}
+function markStale(){ $('viewer').classList.toggle('stale', layers.some(L=>L.tgt && (L.tgt.busy || L.tgt.info==='Searching…'))); }
+const searchTimers={};
+function queueSearch(i, autoPick){ markStale(); clearTimeout(searchTimers[i]); searchTimers[i]=setTimeout(()=>angleSearch(i,autoPick),250); }
+
+/* ============================================================
+   Code generation (lengths in units of the base lattice constant)
+   ============================================================ */
+const npy = M => `np.array([[${fix(M[0][0],12)}, ${fix(M[0][1],12)}], [${fix(M[1][0],12)}, ${fix(M[1][1],12)}]])`;
+const r6 = x => +(+x).toFixed(6);
+let codeApi = 'auto';
+function genCode(G){
+  const base=layers[0], a0=base.a, used=[...new Set(layers.map(l=>TYPES[l.type].cls))];
+  const nm = i => i===0?'base':`layer${i}`;
+  const C = CROT[foldOf(base)];
+  // Classic add_layer(ll1,ll2,ul1,ul2): mlv1 = ll·a (shortest exact supercell vector), mlv2 = R(β)·mlv1, ul = T⁻¹·ll per layer.
+  // Valid iff every twist commutes with the base's rotation symmetry (the supercell then keeps that symmetry).
+  const expressible = layers.slice(1).every(L => foldOf(L)===foldOf(base) && commutes(L.res.T, C));
+  const ll = G.ia;
+  const ulOf = L => { const {P,d}=L.res.T, det=P[0][0]*P[1][1]-P[0][1]*P[1][0];
+    const v=[d*(P[1][1]*ll[0]-P[0][1]*ll[1]), d*(-P[1][0]*ll[0]+P[0][0]*ll[1])];
+    return v.every(x=>x%det===0) ? v.map(x=>x/det) : null; };
+  const uls = layers.map((L,i)=>i===0?null:ulOf(L));
+  const classicOK = expressible && uls.slice(1).every(Boolean);
+  const forcedFallback = codeApi==='classic' && !classicOK;
+  const useClassic = (codeApi==='classic' && classicOK) || (codeApi==='auto' && classicOK) ;
+  let s = `# Generated by the MoirePy Stack Builder. Requires MoirePy v2 (in development).\nimport numpy as np\nfrom moirepy import MoireStack, ${used.join(', ')}\n`;
+  if(!useClassic) s += `from moirepy.twist import Twist\n\nlv = lambda layer: np.array([layer.lv1[:2], layer.lv2[:2]]).T   # lattice vectors as columns\n`;
+  s += `\n# lengths in units of the base lattice constant a0 = ${a0}\n`;
+  layers.forEach((L,i)=>{ s += `${nm(i)} = ${TYPES[L.type].cls}(${L.orb>1?'orbitals='+L.orb:''})  # ${MATS[L.mat].type?MATS[L.mat].name+', ':''}a = ${L.a}${i>0&&Math.abs(L.a/a0-1)>1e-12?` (a/a0 = ${+(L.a/a0).toFixed(5)})`:''}\n`; });
+  layers.forEach((L,i)=>{
+    if(i===0) return;
+    const sRel = L.a/a0;
+    if(useClassic){
+      const Ut = scale2(L.res.an.U, sRel);
+      if(Ut.flat().every((x,k)=>Math.abs(x-[1,0,0,1][k])<1e-12)) return;
+      s += `${nm(i)}.apply_strain(${npy(Ut)})  # a/a0 = ${sRel.toFixed(5)}, fit strain ${(L.res.an.strain*100).toFixed(4)}%\n`;
+    } else if(Math.abs(sRel-1)>1e-12){
+      s += `${nm(i)}.apply_strain(np.eye(2) * ${+sRel.toFixed(10)})  # native lattice constant a/a0\n`;
+    }
+  });
+  s += `\nstack = MoireStack(base)\n`;
+  layers.forEach((L,i)=>{
+    if(i===0) return;
+    const r=L.res;
+    const extra = (L.shift[0]||L.shift[1] ? `, translate=(${r6(L.shift[0]/a0)}, ${r6(L.shift[1]/a0)})` : '') + `, z_pos=${r6(L.z/a0)}`;
+    s += `# ${nm(i)}: theta = ${sgn(r.an.theta,5)} deg, ID T = ${Tstr(r.T)}${r.an.strain>1e-9?`, fit strain ${(r.an.strain*100).toFixed(4)}% (applied automatically)`:''}\n`;
+    if(useClassic) s += `stack.add_layer(${nm(i)}, ${ll[0]}, ${ll[1]}, ${uls[i][0]}, ${uls[i][1]}${extra})\n`;
+    else {
+      let tw;
+      if(L.mode==='tm') tw = `Twist.from_matrix([[${r.T.P[0].join(', ')}], [${r.T.P[1].join(', ')}]], denom=${r.T.d}, base_lv=lv(base), layer_lv=lv(${nm(i)}))`;
+      else if(L.second.on) tw = `Twist.from_coincidence([((${L.pair.l}), (${L.pair.u})), ((${L.second.l}), (${L.second.u}))], lv(base), lv(${nm(i)}))`;
+      else tw = `Twist.from_coincidence([((${L.pair.l}), (${L.pair.u}))], lv(base), lv(${nm(i)}))`;
+      s += `stack.add_layer(${nm(i)}, twist=${tw}${extra})\n`;
+    }
+  });
+  s += `\nstack.generate_points()   # ${G.cells} base cells, ${G.total} sites\nstack.plot_3d()\n`;
+  const msg = useClassic ? { cls:'', t:`Classic form: ll = (${ll}) is the shortest vector of the exact common supercell.` }
+            : { cls:'', t: forcedFallback ? 'Classic add_layer(ll1, ll2, ul1, ul2) cannot express this stack (a twist breaks the base’s rotation symmetry, or the lattices differ), so the exact twist= form is used.'
+                                           : 'Exact form: twist=Twist(…) works for any twist, strain and lattice mix; the common supercell is computed for you.' };
+  return { msg, code:s };
+}
+
+/* minimal Python highlighter: comments, strings, numbers, keywords, classes, calls */
+const PY_TOK = /(#[^\n]*)|('(?:[^'\\\n]|\\.)*'|"(?:[^"\\\n]|\\.)*")|\b(\d+(?:\.\d+)?(?:e[-+]?\d+)?)\b|\b(import|from|as|def|return|for|in|if|elif|else|None|True|False|class|with|lambda|not|and|or|print)\b|\b([A-Z][A-Za-z0-9_]*)\b|\b([a-z_][A-Za-z0-9_]*)(?=\()/g;
+function hlPy(src){
+  let out='', last=0;
+  for(const m of src.matchAll(PY_TOK)){
+    out += esc(src.slice(last, m.index));
+    const cls = m[1]?'com':m[2]?'str':m[3]?'num':m[4]?'kw':m[5]?'cls':'fn';
+    out += `<span class="${cls}">${esc(m[0])}</span>`;
+    last = m.index + m[0].length;
+  }
+  return out + esc(src.slice(last));
+}
+
+/* ============================================================
+   Update pipeline (never leaves stale output)
+   ============================================================ */
+let hashTimer = null;
+function update(){
+  try{
+    layers.forEach((_,i)=>resolve(i));
+    layers.forEach((_,i)=>readout(i));
+    const info=$('stackinfo'), note=$('vnote');
+    const bad = layers.findIndex(L=>!L.res.ok);
+    if(bad>=0){
+      info.className='bad'; info.innerHTML=`Fix ${bad===0?'the base layer':'layer '+bad}: ${esc(layers[bad].res.err)}`;
+      geo=null; note.textContent=''; draw();
+      $('code').textContent=''; $('codemsg').innerHTML=`<div class="msg bad">No code while a layer has an error.</div>`;
+    } else {
+      const G = stackGeometry();
+      info.className='';
+      const maxStrain = Math.max(0, ...layers.map(L=>L.res.an.strain));
+      const strainLine = maxStrain>1e-9 ? `<div class="hint" style="margin-top:2px;color:var(${maxStrain>0.02?'--bad':'--warn'})">Largest strain needed to fit the layers: <b>${(maxStrain*100).toFixed(2)}%</b>${maxStrain>0.02?' (unphysical; real heterostructures are rarely strained beyond about 1%)':''}</div>` : '';
+      info.innerHTML = `<b>${layers.length}</b> layer${layers.length>1?'s':''} · <b>${G.cells.toLocaleString()}</b> base cells · <b>${G.total.toLocaleString()}</b> sites in the common supercell`+
+        `<div class="hint" style="margin-top:2px" title="Length of the shortest vector of the exact common supercell">supercell edge = <b>${Math.hypot(G.a[0],G.a[1]).toFixed(2)}</b>${G.total>200000?' · <span style="color:var(--warn)">very large supercell: this stack is only barely commensurate</span>':''}</div>`+strainLine;
+      const cloud = buildCloud(G);
+      geo = { G, cloud };
+      const wantTiles = +$('tiles').value;
+      note.textContent = cloud.full ? (cloud.tiles>1 ? `${cloud.tiles}×${cloud.tiles} supercells · ` : (wantTiles>1 ? `1 supercell only (${wantTiles}×${wantTiles} would draw too many atoms) · ` : '')) + 'drag rotate · shift/right-drag pan · wheel zoom · double-click reset'
+                                    : `${G.total.toLocaleString()} sites is too many to draw: showing a disc of radius ${cloud.R.toFixed(1)} around the origin.`;
+      draw();
+      const c=genCode(G); $('code').innerHTML=hlPy(c.code); $('codemsg').innerHTML=`<div class="msg ${c.msg.cls}">${esc(c.msg.t)}</div>`;
+    }
+    updateLegend();
+    clearTimeout(hashTimer); hashTimer=setTimeout(saveHash,300);
+  }catch(e){
+    console.error(e);
+    geo=null; draw();
+    $('stackinfo').className='bad'; $('stackinfo').textContent='Internal error: '+e.message;
+    $('code').textContent=''; $('codemsg').innerHTML=`<div class="msg bad">No code: ${esc(e.message)}</div>`;
+  }
+}
+function updateLegend(){
+  const reg = colorMode==='reg' && layers.length>1;
+  $('legend').innerHTML = (reg ? `<span title="Fraction of the local neighbourhood that sits directly on top of an atom of the layer below, on a fixed scale. For honeycomb stacks the dark end is AB/BA and the bright end is AA.">Overlap with the layer below: low (AB-like)<i class="ramp"></i>high (AA)</span>` : '') +
+    layers.map((L,i)=>`<span style="opacity:${L.visible?1:.45};text-decoration:${L.visible?'none':'line-through'}"><i style="background:${L.color}"></i>${i===0?'Base':'Layer '+i} · ${esc(matName(L))}${i>0&&L.res.ok?` · θ ${sgn(L.res.an.theta,3)}°`:''} · z ${fix(L.z,2)}</span>`).join('');
+}
+function renderLayers(){
+  const ae=document.activeElement, fk = ae && ae.dataset && ae.dataset.k!==undefined ? [ae.dataset.i, ae.dataset.k] : null;
+  const scrolls=[...document.querySelectorAll('#layers .scroll')].map(el=>[el.closest('[data-card]').dataset.card, el.scrollTop]);
+  $('layers').innerHTML = layers.map(cardHTML).join('');
+  if(fk){ const el=document.querySelector(`#layers [data-i="${fk[0]}"][data-k="${fk[1]}"]`); if(el) el.focus(); }
+  scrolls.forEach(([c,t])=>{ const el=document.querySelector(`[data-card="${c}"] .scroll`); if(el) el.scrollTop=t; });
+  markStale();
+  update();
+  layers.forEach((L,i)=>{ if(i>0 && L.tgt.rows===null && !L.tgt.busy && L.tgt.info==='') { L.tgt.info='Searching…'; queueSearch(i,false); } });
+}
+
+/* ---------- share state in the URL hash ---------- */
+const KEEP = ['mat','type','a','z','shift','orb','visible','color','mode','pair','second','tm','tgt'];
+function saveHash(){
+  const st = layers.map(L=>{ const o={}; KEEP.forEach(k=>o[k]=L[k]); o.tgt={theta:L.tgt.theta,win:L.tgt.win,maxCells:L.tgt.maxCells,tol:L.tgt.tol}; return o; });
+  try{ history.replaceState(null,'','#s='+encodeURIComponent(btoa(JSON.stringify(st)))); }catch(e){}
+}
+function loadHash(){
+  try{
+    const m = location.hash.match(/#s=(.+)/); if(!m) return false;
+    const st = JSON.parse(atob(decodeURIComponent(m[1])));
+    if(!Array.isArray(st)||!st.length) return false;
+    idc=0; layers = st.map((o,i)=>newLayer(Object.assign({}, o, {open: i===st.length-1})));
+    return true;
+  }catch(e){ return false; }
+}
+
+/* ============================================================
+   Events
+   ============================================================ */
+function setPath(obj,path,val){ const ks=path.split('.'); let o=obj; for(let k=0;k<ks.length-1;k++) o=o[ks[k]]; o[ks[ks.length-1]]=val; }
+$('layers').addEventListener('input',e=>{
+  const t=e.target; if(!t.dataset||t.dataset.k===undefined) return;
+  const L=layers[+t.dataset.i], k=t.dataset.k;
+  if(k==='color'){ L.color=t.value; const d=document.querySelector(`details[data-card="${t.dataset.i}"] .dot`); if(d) d.style.background=t.value; update(); return; }
+  if(t.tagName==='SELECT'){
+    const oldFold=foldOf(L);
+    if(k==='mat'){ L.mat=t.value; const m=MATS[t.value]; if(m.type){ L.type=m.type; L.a=m.a; } }
+    else if(k==='type'){ L.type=t.value; L.mat='custom'; }
+    if(foldOf(L)!==oldFold) L.pair = defaultTwist(foldOf(L));
+    retarget(+t.dataset.i); return;
+  }
+  if(t.type==='checkbox'){ setPath(L,k,t.checked); renderLayers(); return; }
+  const v = t.value==='' ? NaN : +t.value;
+  setPath(L,k,v);
+  t.classList.toggle('badin', !isFin(v));
+  const i=+t.dataset.i;
+  if(k.startsWith('tgt.')){
+    if(isFin(v)) queueSearch(i, true);
+    else { L.tgt.rows=null; L.tgt.all=null; L.tgt.info='Enter a number to search.'; const si=$('sinfo-'+i); if(si) si.textContent=L.tgt.info; const st=$('stab-'+i); if(st) st.innerHTML=''; }
+    return;
+  }
+  if(k.startsWith('pair.')||k.startsWith('second.')){ if(L.mode==='angle'){ L.mode='coin'; } update(); refreshOptions(i); return; }
+  if(k==='a'){ L.mat='custom'; if(isFin(v)&&v>0){ retarget(i,true); return; } }
+  update();
+});
+function refreshOptions(i){ const el=$('stab-'+i); if(el) el.innerHTML=optionsTable(i); }
+// lattice of a layer (or the base) changed: re-search every affected layer, auto-picking the closest option
+function retarget(i, keepDom){
+  const targets = i===0 ? layers.map((_,k)=>k).slice(1) : [i];
+  targets.forEach(k=>{ const L=layers[k]; const differs = L.type!==layers[0].type || Math.abs(L.a/layers[0].a-1)>1e-12;
+    if(differs && !(L.tgt.tol>0)) L.tgt.tol=0.5; if(!differs) L.tgt.tol=0;
+    L.tgt.rows=null; L.tgt.info='Searching…'; queueSearch(k, L.mode==='angle'); });
+  if(keepDom){ update(); targets.forEach(k=>{ const el=$('sinfo-'+k); if(el) el.textContent='Searching…'; }); }
+  else renderLayers();
+}
+$('layers').addEventListener('click',e=>{
+  const sortTh=e.target.closest('[data-sort]');
+  if(sortTh){ const [i,k]=sortTh.dataset.sort.split(':'); layers[+i].tgt.sort=k; refreshOptions(+i); return; }
+  const pick=e.target.closest('[data-pick]');
+  if(pick){
+    const [i,l,u]=pick.dataset.pick.split(':'), L=layers[+i];
+    L.pair={l:l.split(',').map(Number),u:u.split(',').map(Number)}; L.second.on=false; L.mode='angle';
+    renderLayers(); return;
+  }
+  const b=e.target.closest('[data-act]'); if(!b) return;
+  const i=+b.dataset.i, act=b.dataset.act;
+  if(act==='mode'){ layers[i].mode=b.dataset.m; renderLayers(); }
+  else if(act==='raise'){ const L=layers[i]; L.tgt.maxCells=L.tgt.suggest; L.tgt.suggest=null; L.tgt.rows=null; L.tgt.info='Searching…'; renderLayers(); angleSearch(i,true); }
+  else if(act==='cancel'){ const S=layers[i].tgt; S.gen=(S.gen||0)+1; S.busy=false; S.info='Search cancelled.'; markStale(); renderLayers(); }
+  else if(act==='vis'){ e.preventDefault(); layers[i].visible=!layers[i].visible; renderLayers(); }
+  else if(act==='rm'){ e.preventDefault(); layers.splice(i,1); renderLayers(); }
+});
+$('layers').addEventListener('keydown',e=>{
+  if(e.key!=='Enter' && e.key!==' ') return;
+  const el=e.target.closest('[data-pick],[data-sort]'); if(!el) return;
+  e.preventDefault(); el.click();
+});
+$('layers').addEventListener('toggle',e=>{ const d=e.target;
+  if(d.dataset&&d.dataset.card!==undefined&&layers[+d.dataset.card]) layers[+d.dataset.card].open=d.open;
+  if(d.dataset&&d.dataset.adv!==undefined&&layers[+d.dataset.adv]) layers[+d.dataset.adv].tgt.adv=d.open; },true);
+$('addbtn').onclick=()=>{ layers.forEach(L=>L.open=false); layers.push(newLayer(nextDefault())); renderLayers(); };
+async function copyText(text, btn, label){
+  try{ await navigator.clipboard.writeText(text); btn.textContent='Copied ✓'; }
+  catch(e){ const r=document.createRange(); r.selectNodeContents($('code')); const s=getSelection(); s.removeAllRanges(); s.addRange(r); btn.textContent='Press Ctrl+C'; }
+  setTimeout(()=>btn.textContent=label,1500);
+}
+document.querySelectorAll('[data-api]').forEach(b=>b.onclick=()=>{ codeApi=b.dataset.api; document.querySelectorAll('[data-api]').forEach(x=>x.classList.toggle('on',x===b)); update(); });
+$('copy').onclick=()=>copyText($('code').textContent,$('copy'),'Copy');
+$('sharebtn').onclick=async()=>{ saveHash(); try{ await navigator.clipboard.writeText(location.href); $('sharebtn').textContent='Link copied ✓'; }catch(e){ prompt('Copy this link:', location.href); } setTimeout(()=>$('sharebtn').textContent='Share link',1500); };
+$('sideclose').onclick=()=>$('app').classList.add('noside');
+$('sidetab').onclick=()=>$('app').classList.remove('noside');
+$('themebtn').onclick=()=>{
+  const cur=document.documentElement.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');
+  const nxt=cur==='dark'?'light':'dark'; document.documentElement.dataset.theme=nxt;
+  try{ localStorage.setItem('moire-theme',nxt); }catch(e){}
+  draw();
+};
+try{ const t=localStorage.getItem('moire-theme'); if(t) document.documentElement.dataset.theme=t; }catch(e){}
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',draw);
+
+/* ---------- examples ---------- */
+function load(name){
+  idc=0;
+  const G = MATS.graphene;
+  const gr = (o={}) => newLayer(Object.assign({ mat:'graphene', type:'hex', a:G.a }, o));
+  const tw = defaultTwist(6);
+  if(name==='sq'){
+    layers=[newLayer({mat:'custom',type:'sq',a:1}), newLayer({mat:'custom',type:'sq',a:1,z:1.5,pair:defaultTwist(4),tgt:{theta:36.87}})];
+  } else if(name==='magic'){
+    layers=[gr(), gr({z:G.d, pair:{l:[31,32],u:[32,31]}, tgt:{theta:1.05, win:0.1}})];
+  } else if(name==='attg'){
+    layers=[gr(), gr({z:G.d, pair:tw}), gr({z:2*G.d, pair:IDENT, mode:'coin', tgt:{theta:0}})];
+  } else if(name==='helical'){
+    const T1 = Tfromcoin(tw.l, tw.u, CROT[6]);                  // second twist = first applied twice: T2 = T1²
+    layers=[gr(), gr({z:G.d, pair:tw}), gr({z:2*G.d, mode:'tm', tm:{P:mulm(T1.P,T1.P), d:T1.d*T1.d}, tgt:{theta:10.17}})];
+  } else if(name==='ghbn'){
+    layers=[gr(), newLayer({mat:'hbn', type:'hex', a:MATS.hbn.a, z:MATS.hbn.d, pair:{l:[57,0],u:[56,0]}, tgt:{theta:0, win:0.5, tol:0.05, maxCells:5000}})];
+  } else {
+    layers=[gr(), gr({z:G.d, pair:tw})];
+  }
+  layers.forEach((L,i)=>L.open = i>=layers.length-2);
+  renderLayers();
+  setView(name==='magic'||name==='ghbn' ? 'top' : 'iso');
+}
+$('example').onchange=e=>{ if(e.target.value) load(e.target.value); e.target.value=''; };
+setProj('persp');
+if(innerWidth>=1101 && innerWidth<1200) $('app').classList.add('noside');      // code panel becomes an overlay drawer on mid-size screens
+if(loadHash()){ renderLayers(); setView('iso'); } else load('tbg');
+</script>
+</body>
+</html>

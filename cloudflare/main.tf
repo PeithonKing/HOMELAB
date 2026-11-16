@@ -43,6 +43,12 @@ variable "cloudflare_account_id" {
   type        = string
 }
 
+variable "qkbench_enabled" {
+  description = "Publish the temporary qkrylov benchmark page (qkbench.peithonking.com); switched off by qkbench/expire.sh"
+  type        = bool
+  default     = false
+}
+
 # ==============================================================================
 # 4. DNS RECORDS (GITHUB PAGES & EXTERNAL)
 # Each block represents a single DNS record in your Cloudflare dashboard.
@@ -112,6 +118,16 @@ resource "cloudflare_record" "club" {
   proxied = true
 }
 
+# Temporary static page for the qkrylov benchmark viewer. count = 0 removes the record (see qkbench/expire.sh).
+resource "cloudflare_record" "qkbench" {
+  count   = var.qkbench_enabled ? 1 : 0
+  zone_id = var.cloudflare_zone_id
+  name    = "qkbench"
+  content = "bbb60cf6-7447-4711-bd02-d64e16760e7f.cfargotunnel.com"
+  type    = "CNAME"
+  proxied = true
+}
+
 resource "cloudflare_record" "requests" {
   zone_id = var.cloudflare_zone_id
   name    = "requests"
@@ -123,6 +139,32 @@ resource "cloudflare_record" "requests" {
 resource "cloudflare_record" "notes" {
   zone_id = var.cloudflare_zone_id
   name    = "notes"
+  content = "bbb60cf6-7447-4711-bd02-d64e16760e7f.cfargotunnel.com"
+  type    = "CNAME"
+  proxied = true
+}
+
+resource "cloudflare_record" "drive" {
+  zone_id = var.cloudflare_zone_id
+  name    = "drive"
+  content = "bbb60cf6-7447-4711-bd02-d64e16760e7f.cfargotunnel.com"
+  type    = "CNAME"
+  proxied = true
+}
+
+# School documents app for the headmaster (baba_docs) — device-locked, see ~/HOMELAB/baba_docs
+resource "cloudflare_record" "docs" {
+  zone_id = var.cloudflare_zone_id
+  name    = "docs"
+  content = "bbb60cf6-7447-4711-bd02-d64e16760e7f.cfargotunnel.com"
+  type    = "CNAME"
+  proxied = true
+}
+
+# Signature icon host for sigil (email-open tracker), see ~/HOMELAB/sigil
+resource "cloudflare_record" "cdn" {
+  zone_id = var.cloudflare_zone_id
+  name    = "cdn"
   content = "bbb60cf6-7447-4711-bd02-d64e16760e7f.cfargotunnel.com"
   type    = "CNAME"
   proxied = true
@@ -153,6 +195,36 @@ resource "cloudflare_zero_trust_tunnel_cloudflared_config" "homelab_config" {
     ingress_rule {
       hostname = "notes.peithonking.com"
       service  = "http://silverbullet:3000"
+    }
+    # Nextcloud Office: Collabora lives under the same hostname on its own paths
+    # (editor assets, discovery/capabilities, and the /cool websocket).
+    ingress_rule {
+      hostname = "drive.peithonking.com"
+      path     = "^/(browser|hosting|cool)/"
+      service  = "http://collabora:9980"
+    }
+    # Nextcloud (drive) - everything else on the hostname
+    ingress_rule {
+      hostname = "drive.peithonking.com"
+      service  = "http://nextcloud:80"
+    }
+    # School documents app (baba_docs): FastAPI container on the shared docker network
+    ingress_rule {
+      hostname = "docs.peithonking.com"
+      service  = "http://baba-docs:8765"
+    }
+    # sigil public side: only the signature icons; sigil itself 404s everything else (nginx-style).
+    # Dashboard (8081) is not routed here, it stays on LAN / Tailscale.
+    ingress_rule {
+      hostname = "cdn.peithonking.com"
+      service  = "http://sigil:8080"
+    }
+    dynamic "ingress_rule" {
+      for_each = var.qkbench_enabled ? [1] : []
+      content {
+        hostname = "qkbench.peithonking.com"
+        service  = "http://qkbench:80"
+      }
     }
     # If someone asks for literally anything else that hits this tunnel, throw a 404 Error (Catch-all)
     ingress_rule {
@@ -190,6 +262,17 @@ resource "cloudflare_page_rule" "bypass_cache_jellyfin" {
   }
 }
 
+resource "cloudflare_page_rule" "bypass_cache_drive" {
+  zone_id  = var.cloudflare_zone_id
+  target   = "drive.peithonking.com/*"
+  status   = "active"
+  priority = 3
+
+  actions {
+    cache_level = "bypass"
+  }
+}
+
 # -------------------------------------------------------------
 # WAF / FIREWALL RULES (Security)
 # -------------------------------------------------------------
@@ -203,8 +286,16 @@ resource "cloudflare_ruleset" "homelab_waf" {
 
   rules {
     action      = "block"
-    expression  = "(not ip.geoip.country in {\"AT\" \"IN\" \"US\"})"
+    # cdn is exempt: mail proxies / recipients anywhere must get the icons, a block page would show a broken image.
+    expression  = "(not ip.geoip.country in {\"AT\" \"IN\" \"US\"} and http.host ne \"qkbench.peithonking.com\" and http.host ne \"cdn.peithonking.com\")"
     description = "Block traffic outside AT, IN, US"
+    enabled     = true
+  }
+
+  rules {
+    action      = "block"
+    expression  = "(http.host eq \"drive.peithonking.com\" and (starts_with(http.request.uri.path, \"/browser/dist/admin\") or starts_with(http.request.uri.path, \"/cool/adminws\") or starts_with(http.request.uri.path, \"/cool/getMetrics\")))"
+    description = "Block Collabora admin console and metrics from the internet"
     enabled     = true
   }
 

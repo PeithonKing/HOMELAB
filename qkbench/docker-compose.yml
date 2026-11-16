@@ -1,0 +1,15 @@
+# Temporary static host for the qkrylov benchmark viewer, reached through the cloudflared tunnel
+# as qkbench.peithonking.com (see ../cloudflare/main.tf). Removed automatically by expire.sh.
+services:
+  qkbench:
+    image: nginx:alpine
+    container_name: qkbench
+    restart: unless-stopped
+    volumes:
+      - ./site:/usr/share/nginx/html:ro
+    networks:
+      - exposed_internet
+
+networks:
+  exposed_internet:
+    external: true

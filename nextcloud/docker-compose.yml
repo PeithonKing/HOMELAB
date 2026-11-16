@@ -1,0 +1,99 @@
+# Nextcloud + Postgres + Redis + cron + Collabora (Nextcloud Office)
+# Heavy data lives on the T7 (ext4) under /mnt/ssd/nextcloud; only this file + .env live in HOMELAB.
+# Public access: drive.peithonking.com (nextcloud; collabora on /browser /hosting /cool paths) via the
+# Cloudflare tunnel on the exposed_internet network. LAN: http://192.168.29.4:8090
+services:
+  nextcloud:
+    image: nextcloud:31-apache
+    container_name: nextcloud
+    restart: unless-stopped
+    depends_on: [nextcloud-db, nextcloud-redis]
+    ports:
+      - "8090:80"
+    environment:
+      POSTGRES_HOST: nextcloud-db
+      POSTGRES_DB: nextcloud
+      POSTGRES_USER: nextcloud
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      REDIS_HOST: nextcloud-redis
+      NEXTCLOUD_ADMIN_USER: ${NEXTCLOUD_ADMIN_USER}
+      NEXTCLOUD_ADMIN_PASSWORD: ${NEXTCLOUD_ADMIN_PASSWORD}
+      NEXTCLOUD_TRUSTED_DOMAINS: drive.peithonking.com 192.168.29.4:8090 192.168.29.4 nextcloud localhost
+      NEXTCLOUD_DATA_DIR: /var/www/data
+      OVERWRITEPROTOCOL: https
+      OVERWRITECLIURL: https://drive.peithonking.com
+      TRUSTED_PROXIES: 192.168.48.0/20
+      PHP_MEMORY_LIMIT: 1G
+      PHP_UPLOAD_LIMIT: 16G
+      TZ: Asia/Kolkata
+    volumes:
+      - /mnt/ssd/nextcloud/html:/var/www/html
+      - /mnt/ssd/nextcloud/data:/var/www/data
+    networks: [default, exposed_internet]
+    labels:
+      glance.name: Nextcloud
+      glance.icon: di:nextcloud
+      glance.url: https://drive.peithonking.com
+      glance.description: Files, docs & office suite
+      glance.id: nextcloud
+      glance.category: general
+
+  nextcloud-cron:
+    image: nextcloud:31-apache
+    container_name: nextcloud-cron
+    restart: unless-stopped
+    entrypoint: /cron.sh
+    depends_on: [nextcloud]
+    volumes:
+      - /mnt/ssd/nextcloud/html:/var/www/html
+      - /mnt/ssd/nextcloud/data:/var/www/data
+    labels:
+      glance.parent: nextcloud
+      glance.name: Cron
+      glance.icon: si:clockify
+
+  nextcloud-db:
+    image: postgres:16-alpine
+    container_name: nextcloud-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: nextcloud
+      POSTGRES_USER: nextcloud
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - /mnt/ssd/nextcloud/db:/var/lib/postgresql/data
+    labels:
+      glance.parent: nextcloud
+      glance.name: Postgres
+      glance.icon: si:postgresql
+
+  nextcloud-redis:
+    image: redis:7-alpine
+    container_name: nextcloud-redis
+    restart: unless-stopped
+    labels:
+      glance.parent: nextcloud
+      glance.name: Redis
+      glance.icon: si:redis
+
+  collabora:
+    image: collabora/code:latest
+    container_name: collabora
+    restart: unless-stopped
+    cap_add: [MKNOD]
+    environment:
+      aliasgroup1: https://drive\.peithonking\.com:443
+      server_name: drive.peithonking.com
+      extra_params: --o:ssl.enable=false --o:ssl.termination=true
+      username: ${COLLABORA_ADMIN_USER}
+      password: ${COLLABORA_ADMIN_PASSWORD}
+      dictionaries: en_US en_GB
+    networks: [default, exposed_internet]
+    labels:
+      glance.parent: nextcloud
+      glance.name: Collabora Office
+      glance.icon: di:collabora-online
+
+networks:
+  exposed_internet:
+    external: true

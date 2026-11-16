@@ -1,0 +1,39 @@
+:root { color-scheme: dark; --bg: #181818; --panel: #1f1f1f; --line: #333; --text: #e6e6e6; --dim: #9a9a9a; --accent: #b388ff; }
+* { box-sizing: border-box; }
+body { margin: 0; display: flex; min-height: 100vh; background: var(--bg); color: var(--text); font: 14px/1.4 system-ui, sans-serif; }
+#controls { width: 280px; flex: none; padding: 20px; background: var(--panel); border-right: 1px solid var(--line); overflow-y: auto; }
+#controls h1 { margin: 0 0 14px; font-size: 20px; color: var(--accent); }
+#controls h2 { margin: 18px 0 6px; font-size: 14px; }
+#controls label { display: block; margin: 12px 0 4px; font-weight: 600; }
+#controls label.check { font-weight: 400; display: flex; gap: 8px; align-items: center; }
+select { width: 100%; padding: 6px; background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: 4px; }
+.note { margin: 6px 0 0; color: var(--dim); font-size: 12px; }
+/* One slider with two knobs: two range inputs stacked, only their knobs take the mouse. */
+.dual { position: relative; height: 28px; margin: 8px 0; }
+.dual-track { position: absolute; left: 8px; right: 8px; top: 12px; height: 4px; background: var(--line); border-radius: 2px; }
+.dual-fill { position: absolute; height: 100%; background: var(--accent); border-radius: 2px; }
+.dual input { position: absolute; left: 0; width: 100%; top: 4px; margin: 0; height: 20px; background: none; pointer-events: none; -webkit-appearance: none; appearance: none; }
+.dual input::-webkit-slider-runnable-track { background: none; height: 20px; }
+.dual input::-moz-range-track { background: none; }
+.dual input::-webkit-slider-thumb { pointer-events: auto; -webkit-appearance: none; width: 18px; height: 18px; margin-top: 1px; border-radius: 50%; background: var(--accent); border: 2px solid var(--panel); cursor: pointer; }
+.dual input::-moz-range-thumb { pointer-events: auto; width: 14px; height: 14px; border-radius: 50%; background: var(--accent); border: 2px solid var(--panel); cursor: pointer; }
+table.m { border-collapse: collapse; margin: 6px 0 10px; width: 100%; }
+table.m td, table.m th { border: 1px solid var(--line); padding: 5px 8px; text-align: center; font-weight: 400; white-space: nowrap; }
+table.m th:first-child { text-align: left; }
+.group { margin-top: 14px; font-weight: 600; display: flex; gap: 8px; align-items: center; }
+.swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 4px; }
+.buttons { display: flex; gap: 8px; margin-top: 18px; }
+button { flex: 1; padding: 7px; background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: 4px; cursor: pointer; }
+button:hover { border-color: var(--accent); }
+main { flex: 1; min-width: 0; padding: 14px 20px; }
+#title { text-align: center; font-weight: 400; font-size: 20px; margin: 6px 0 0; }
+#chart svg { width: 100%; height: auto; display: block; }
+#chart text { fill: var(--text); font-family: inherit; }
+#chart .grid { stroke: var(--line); }
+#chart .dim { fill: var(--dim); }
+#chart rect.bar:hover { filter: brightness(1.25); }
+#table { border-collapse: collapse; margin: 18px auto 30px; font-size: 12px; font-variant-numeric: tabular-nums; }
+#table th, #table td { border: 1px solid var(--line); padding: 3px 9px; text-align: right; }
+#table th { color: var(--dim); font-weight: 600; }
+#tip { position: fixed; pointer-events: none; padding: 6px 9px; background: #000d; border: 1px solid #555; border-radius: 4px; font-size: 12px; white-space: pre; }
+.legend { margin: 4px 0 0; line-height: 1.45; }

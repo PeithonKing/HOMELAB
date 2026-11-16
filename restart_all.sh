@@ -72,6 +72,14 @@ echo -e "========================================\n\n"
 # cd ..
 # echo -e "========================================\n\n"
 
+# nextcloud
+echo "Restarting Nextcloud..."
+cd nextcloud
+# docker compose down
+time docker compose up -d
+cd ..
+echo -e "========================================\n\n"
+
 # # ollama
 # echo "Restarting Ollama..."
 # cd ollama

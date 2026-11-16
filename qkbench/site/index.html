@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>QKrylov benchmarks</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="style.css?v=6">
+</head>
+<body>
+<aside id="controls">
+  <h1>Controls</h1>
+
+  <label for="dataset">Dataset</label>
+  <select id="dataset"></select>
+  <p id="meta" class="note"></p>
+
+  <label for="metric">Metric</label>
+  <select id="metric">
+    <option value="time">Execution time (s)</option>
+    <option value="per_iter">Time per iteration (ms)</option>
+    <option value="speedup">Per-iteration speed-up over FP64 CPU single-pass</option>
+  </select>
+
+  <label class="check"><input type="checkbox" id="log"> Logarithmic axis</label>
+
+  <h2>L range: <span id="lrange-label"></span></h2>
+  <div class="dual">
+    <div class="dual-track"><div class="dual-fill" id="lfill"></div></div>
+    <input type="range" id="lmin" aria-label="smallest L">
+    <input type="range" id="lmax" aria-label="largest L">
+  </div>
+
+  <div id="matrix"></div>
+  <p class="note legend">
+    <b>SP</b> = Single-Pass, <b>TP</b> = Two-Pass Lanczos: two algorithms, same energy. TP runs the recursion twice
+    (about 2&times; slower) but stores only a few vectors, so much larger systems fit in memory.
+  </p>
+
+  <div class="buttons">
+    <button id="csv">Download CSV</button>
+    <button id="png">Save PNG</button>
+  </div>
+</aside>
+
+<main>
+  <h2 id="title"></h2>
+  <div id="chart"></div>
+  <table id="table"></table>
+</main>
+
+<div id="tip" hidden></div>
+<script src="data.js?v=6"></script>
+<script src="app.js?v=6"></script>
+</body>
+</html>
